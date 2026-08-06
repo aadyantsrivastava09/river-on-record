@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #05080b;
+  --color-abyss: #070c10;
+  --color-panel: #0a1218;
+  --color-panel2: #0e1921;
+  --color-line: rgba(148, 176, 190, 0.14);
+  --color-line-strong: rgba(148, 176, 190, 0.28);
+  --color-fog: #7e97a6;
+  --color-mist: #b6c8d3;
+  --color-snow: #e9f1f5;
+  --color-alive: #2fbf8f;
+  --color-alive-dim: #1c7f61;
+  --color-amber: #f0b429;
+  --color-dead: #f05252;
+  --color-dead-dim: #8f2f2f;
+  --color-cyan: #56c8e8;
+
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-snow);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(47, 191, 143, 0.35);
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #05080b;
+}
+::-webkit-scrollbar-thumb {
+  background: #16232d;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #1f333f;
+}
+
+@layer components {
+  .card {
+    background: linear-gradient(180deg, rgba(14, 25, 33, 0.85), rgba(10, 18, 24, 0.9));
+    border: 1px solid var(--color-line);
+    border-radius: 14px;
+  }
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+  }
+  .glow-alive {
+    box-shadow: 0 0 0 1px rgba(47, 191, 143, 0.25), 0 0 28px -6px rgba(47, 191, 143, 0.45);
+  }
+  .glow-dead {
+    box-shadow: 0 0 0 1px rgba(240, 82, 82, 0.25), 0 0 28px -6px rgba(240, 82, 82, 0.45);
+  }
+}
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker 36s linear infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
