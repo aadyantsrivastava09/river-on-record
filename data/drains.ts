@@ -101,12 +101,5 @@ export const TICKER_ITEMS = [
 ];
 
 // ---------------------------------------------------------------------------
-// RATING SYSTEM — PLUG-IN SLOT
-// The team's metric system is pending. Once provided, this mapping defines
-// how each drain's rating is computed and displayed. Until then the scoreboard
-// shows "RATING SYSTEM PENDING" with a null rating.
+// RATING SYSTEM — see data/ror.ts (RoRES — River on Record Environmental Score)
 // ---------------------------------------------------------------------------
-export const RATING_STATUS = {
-  pending: true,
-  note: "Metric system being finalised by the team. Parameters under discussion include BOD, DO, faecal coliform, surfactants, ammonia and visual foam index — each mapped to a public source.",
-} as const;

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DRAINS } from "@/data/drains";
 import type { Drain } from "@/data/drains";
+import { getRating } from "@/data/ror";
 
 const MAP_PATH =
   "M150 20 C 60 70, 240 110, 150 165 C 60 220, 240 270, 150 325 C 60 380, 240 430, 150 485 C 110 520, 190 545, 150 615";
@@ -24,6 +25,7 @@ export default function DrainMap() {
   }, []);
 
   const isBig = useMemo(() => (d: Drain) => d.share !== null, []);
+  const rating = getRating(selected.id);
 
   return (
     <section id="map" className="scroll-mt-24 border-y border-line bg-abyss py-20">
@@ -113,9 +115,26 @@ export default function DrainMap() {
               <span className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-fog">
                 Source: {selected.source}
               </span>
-              <span className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber">
-                Rating: pending
-              </span>
+              {rating ? (
+                <span
+                  className="rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+                  style={{
+                    color: rating.band.name === "Critical" ? "#e9f1f5" : rating.band.hex,
+                    borderColor:
+                      rating.band.name === "Critical"
+                        ? "rgba(148,176,190,0.4)"
+                        : rating.band.hex + "55",
+                    background:
+                      rating.band.name === "Critical" ? "rgba(0,0,0,0.5)" : rating.band.hex + "12",
+                  }}
+                >
+                  RoRES {rating.total} · {rating.band.name}
+                </span>
+              ) : (
+                <span className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber">
+                  RoRES: awaiting public data
+                </span>
+              )}
             </div>
           </div>
         </div>
