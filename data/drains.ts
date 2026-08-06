@@ -101,5 +101,5 @@ export const TICKER_ITEMS = [
 ];
 
 // ---------------------------------------------------------------------------
-// RATING SYSTEM — see data/ror.ts (RoRES — River on Record Environmental Score)
+// RATING SYSTEM — see data/dhs.ts (DHS — Drain Health Score, final system)
 // ---------------------------------------------------------------------------

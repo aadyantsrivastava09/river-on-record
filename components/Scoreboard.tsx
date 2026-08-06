@@ -3,39 +3,38 @@
 import { useMemo, useState } from "react";
 import { DRAINS } from "@/data/drains";
 import {
-  BANDS,
-  ROR_INPUTS,
+  DHS_INPUTS,
+  RISK_LEVELS,
   TREND_GLYPH,
+  TREND_LABELS,
   WQ_LABELS,
-  getRating,
-} from "@/data/ror";
-import type { Band } from "@/data/ror";
+  getDhs,
+} from "@/data/dhs";
+import type { DhsResult, RiskLevel, TrendState } from "@/data/dhs";
 
 type SortKey = "score" | "rank" | "share" | "name";
 
 const COMPONENTS = [
-  { label: "Water quality", weight: "40%", key: "wq" as const },
+  { label: "Water quality", weight: "70%", key: "wq" as const },
   { label: "Trend", weight: "20%", key: "trend" as const },
-  { label: "Pollution load", weight: "15%", key: "pl" as const },
-  { label: "Exposure", weight: "15%", key: "es" as const },
-  { label: "Reliability", weight: "10%", key: "rs" as const },
+  { label: "Pollution load", weight: "10%", key: "pl" as const },
 ];
 
 const barColor = (v: number) => (v > 74 ? "#2fbf8f" : v > 44 ? "#f0b429" : "#f05252");
 
-function ScoreChip({ total, band }: { total: number; band: Band }) {
-  const critical = band.name === "Critical";
+function ScoreChip({ total, risk }: { total: number; risk: RiskLevel }) {
+  const critical = risk.name === "Critical";
   return (
     <span
       className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 font-mono"
       style={{
-        color: critical ? "#e9f1f5" : band.hex,
-        border: `1px solid ${critical ? "rgba(148,176,190,0.4)" : band.hex + "66"}`,
-        background: critical ? "rgba(0,0,0,0.55)" : band.hex + "14",
+        color: critical ? "#e9f1f5" : risk.hex,
+        border: `1px solid ${risk.hex + "66"}`,
+        background: risk.hex + "14",
       }}
     >
       <span className="text-base font-bold leading-none">{total}</span>
-      <span className="text-[9px] uppercase leading-none tracking-[0.14em]">{band.name}</span>
+      <span className="text-[9px] uppercase leading-none tracking-[0.14em]">{risk.name}</span>
     </span>
   );
 }
@@ -62,8 +61,8 @@ export default function Scoreboard() {
         break;
       case "score": {
         r.sort((a, b) => {
-          const ra = getRating(a.id);
-          const rb = getRating(b.id);
+          const ra = getDhs(a.id);
+          const rb = getDhs(b.id);
           if (ra && rb) return ra.total - rb.total; // most dangerous first
           if (ra) return -1;
           if (rb) return 1;
@@ -99,48 +98,50 @@ export default function Scoreboard() {
           <p className="max-w-md text-sm leading-relaxed text-fog">
             Every drain that feeds the 22-km stretch, scored and republished weekly.
             One question, one number:{" "}
-            <span className="text-snow">how environmentally harmful is this drain today?</span>
+            <span className="text-snow">how healthy is this drain today?</span>
           </p>
         </div>
 
-        {/* RoRES methodology */}
+        {/* DHS methodology */}
         <div className="mt-8 rounded-2xl border border-alive/25 bg-alive/[0.05] p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="font-display text-sm font-bold text-alive">
-              RoRES — River on Record Environmental Score
+              DHS — Drain Health Score
             </p>
             <span className="rounded-full border border-alive/40 bg-alive/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-alive">
-              Live · 0–100 · 100 = cleanest
+              Live · 0–100 · 100 = healthy drain
             </span>
           </div>
           <p className="mt-3 max-w-3xl font-mono text-xs leading-relaxed text-mist">
-            RoRES = 0.40 · Water Quality + 0.20 · Trend + 0.15 · Pollution Load + 0.15 ·
-            Exposure + 0.10 · Reliability
+            DHS = 0.70 · Water Quality + 0.20 · Trend + 0.10 · Pollution Load
           </p>
           <p className="mt-2 max-w-3xl text-xs leading-relaxed text-fog">
-            Water quality (DO, BOD, pH, turbidity, floating waste) is half the story; the
-            Trend term rewards improvement, not just good conditions; load, exposure and
-            reliability keep the score honest. Explainable in under 30 seconds.
+            Water quality dominates — DO 25%, BOD 25%, Ammonia 20%, pH 10%, Turbidity 10%,
+            Foam/Waste 10% — each converted to 0–100 against accepted standards (CPCB,
+            DPCC, US EPA, EEA). The Trend term rewards improvement, not just good
+            conditions. Confidence and Risk are shown separately — they never change the score.
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {BANDS.map((b, i) => {
-              const critical = b.name === "Critical";
-              const top = i === 0 ? 100 : BANDS[i - 1].min - 1;
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {RISK_LEVELS.map((r, i) => {
+              const top = i === 0 ? 100 : RISK_LEVELS[i - 1].min - 1;
               return (
                 <span
-                  key={b.name}
+                  key={r.name}
                   className="inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
                   style={{
-                    color: critical ? "#e9f1f5" : b.hex,
-                    borderColor: critical ? "rgba(148,176,190,0.4)" : b.hex + "55",
-                    background: critical ? "rgba(0,0,0,0.5)" : b.hex + "12",
+                    color: r.hex,
+                    borderColor: r.hex + "55",
+                    background: r.hex + "12",
                   }}
                 >
-                  <span className="h-2 w-2 rounded-full" style={{ background: critical ? "#7e97a6" : b.hex }} />
-                  {b.name} {b.min}–{top}
+                  <span className="h-2 w-2 rounded-full" style={{ background: r.hex }} />
+                  {r.name} risk {r.min}–{top}
                 </span>
               );
             })}
+            <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.14em] text-fog/70">
+              + Confidence % displayed separately
+            </span>
           </div>
         </div>
 
@@ -154,7 +155,7 @@ export default function Scoreboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">
-              {ROR_INPUTS.length} of {DRAINS.length} drains rated
+              {DHS_INPUTS.length} of {DRAINS.length} drains rated
             </span>
             <input
               value={query}
@@ -172,27 +173,28 @@ export default function Scoreboard() {
               <tr className="border-b border-line bg-panel">
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">#</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Drain</th>
-                <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">RoRES</th>
+                <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">DHS</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Trend</th>
+                <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Confidence</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Worst public reading</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Load share</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((d) => {
-                const r = getRating(d.id);
-                const open = expanded === d.id;
-                const g = r ? (TREND_GLYPH[
-                  ROR_INPUTS.find((i) => i.drainId === d.id)!.trend.state
-                ] as { g: string; c: string }) : null;
+                const r = getDhs(d.id);
+                const input = DHS_INPUTS.find((i) => i.drainId === d.id);
+                const state = input?.trend.state as TrendState | undefined;
+                const glyph = r && state ? TREND_GLYPH[state] : null;
                 return (
                   <FragmentRow
                     key={d.id}
                     drainId={d.id}
-                    open={open}
-                    onToggle={() => setExpanded(open ? null : d.id)}
-                    ror={r}
-                    trendGlyph={g}
+                    open={expanded === d.id}
+                    onToggle={() => setExpanded(expanded === d.id ? null : d.id)}
+                    dhs={r}
+                    trendState={state}
+                    trendGlyph={glyph}
                   />
                 );
               })}
@@ -212,13 +214,15 @@ function FragmentRow({
   drainId,
   open,
   onToggle,
-  ror,
+  dhs,
+  trendState,
   trendGlyph,
 }: {
   drainId: number;
   open: boolean;
   onToggle: () => void;
-  ror: ReturnType<typeof getRating>;
+  dhs: DhsResult | undefined;
+  trendState: TrendState | undefined;
   trendGlyph: { g: string; c: string } | null;
 }) {
   const d = DRAINS.find((x) => x.id === drainId)!;
@@ -236,8 +240,8 @@ function FragmentRow({
           <p className="mt-0.5 max-w-[240px] text-[11px] leading-snug text-fog">{d.note}</p>
         </td>
         <td className="px-4 py-3.5">
-          {ror ? (
-            <ScoreChip total={ror.total} band={ror.band} />
+          {dhs ? (
+            <ScoreChip total={dhs.total} risk={dhs.risk} />
           ) : (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-panel2 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-fog">
               <span className="h-1.5 w-1.5 rounded-full bg-amber animate-pulse-dot" />
@@ -246,22 +250,28 @@ function FragmentRow({
           )}
         </td>
         <td className="px-4 py-3.5">
-          {ror ? (
+          {dhs && trendState && trendGlyph ? (
             <span className="inline-flex flex-col gap-0.5 font-mono text-xs">
-              <span className="flex items-center gap-1.5" style={{ color: trendGlyph!.c }}>
-                {trendGlyph!.g}
+              <span className="flex items-center gap-1.5" style={{ color: trendGlyph.c }}>
+                {trendGlyph.g}
                 <span className="text-snow">
-                  {ror.prevTotal !== undefined
-                    ? `${ror.prevTotal} → ${ror.total}`
-                    : `first rating · ${ror.total}`}
+                  {dhs.prevTotal !== undefined
+                    ? `${dhs.prevTotal} → ${dhs.total}`
+                    : `first rating · ${dhs.total}`}
                 </span>
               </span>
-              {ror.prevBand && (
-                <span className="text-[9px] uppercase tracking-[0.12em] text-fog">
-                  {ror.prevBand.name} → {ror.band.name}
-                </span>
-              )}
+              <span className="text-[9px] uppercase tracking-[0.12em] text-fog">
+                {TREND_LABELS[trendState]}
+                {dhs.prevRisk && ` · ${dhs.prevRisk.name} → ${dhs.risk.name}`}
+              </span>
             </span>
+          ) : (
+            <span className="font-mono text-xs text-fog/60">—</span>
+          )}
+        </td>
+        <td className="px-4 py-3.5">
+          {dhs ? (
+            <span className="font-mono text-xs text-mist">{dhs.confidence}%</span>
           ) : (
             <span className="font-mono text-xs text-fog/60">—</span>
           )}
@@ -277,10 +287,10 @@ function FragmentRow({
           )}
         </td>
       </tr>
-      {open && ror && (
+      {open && dhs && (
         <tr className="border-b border-line/60 bg-panel/70">
-          <td colSpan={6} className="px-6 py-6">
-            <Breakdown ror={ror} drainName={d.name} />
+          <td colSpan={7} className="px-6 py-6">
+            <Breakdown dhs={dhs} drainName={d.name} />
           </td>
         </tr>
       )}
@@ -288,21 +298,19 @@ function FragmentRow({
   );
 }
 
-function Breakdown({ ror, drainName }: { ror: NonNullable<ReturnType<typeof getRating>>; drainName: string }) {
-  const input = ROR_INPUTS.find((i) => i.drainId === ror.drainId)!;
+function Breakdown({ dhs, drainName }: { dhs: DhsResult; drainName: string }) {
+  const input = DHS_INPUTS.find((i) => i.drainId === dhs.drainId)!;
   const values: Record<string, number> = {
-    wq: Math.round(ror.wq),
-    trend: ror.trend,
-    pl: Math.round(ror.pl),
-    es: Math.round(ror.es),
-    rs: ror.rs,
+    wq: Math.round(dhs.wq),
+    trend: dhs.trend,
+    pl: Math.round(dhs.pl),
   };
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       {/* component bars */}
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-fog">
-          RoRES breakdown — {drainName}
+          DHS breakdown — {drainName}
         </p>
         <div className="mt-4 space-y-4">
           {COMPONENTS.map((c) => {
@@ -328,10 +336,17 @@ function Breakdown({ ror, drainName }: { ror: NonNullable<ReturnType<typeof getR
             );
           })}
         </div>
-        <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.14em] text-fog">
-          Final: <span className="text-snow">RoRES {ror.total}</span> — {ror.band.name} band (
-          {ror.band.blurb})
-        </p>
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <span
+            className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 font-mono text-xs font-bold"
+            style={{ color: dhs.risk.hex, border: `1px solid ${dhs.risk.hex + "66"}`, background: dhs.risk.hex + "14" }}
+          >
+            {dhs.total} · {dhs.risk.name} risk
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">
+            Confidence {dhs.confidence}% · displayed separately
+          </span>
+        </div>
       </div>
 
       {/* evidence */}
@@ -340,7 +355,7 @@ function Breakdown({ ror, drainName }: { ror: NonNullable<ReturnType<typeof getR
           Every input traced to a public source
         </p>
         <div className="mt-4 space-y-2.5">
-          {ror.wqDetail.map((p) => (
+          {dhs.wqDetail.map((p) => (
             <div key={p.key} className="rounded-xl border border-line bg-abyss p-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-display text-xs font-bold text-snow">
@@ -351,7 +366,10 @@ function Breakdown({ ror, drainName }: { ror: NonNullable<ReturnType<typeof getR
                 </p>
                 <span className="font-mono text-xs font-bold" style={{ color: barColor(p.score) }}>
                   {Math.round(p.score)}
-                  <span className="ml-1 font-normal text-fog">· {p.reading.value}{p.key === "waste" ? "/100" : p.key === "ph" ? "" : " mg/l"}</span>
+                  <span className="ml-1 font-normal text-fog">
+                    · {p.reading.value}
+                    {p.key === "waste" ? "/100" : p.key === "ph" || p.key === "ammonia" ? "" : " mg/l"}
+                  </span>
                 </span>
               </div>
               <p className="mt-1.5 text-[11px] leading-snug text-fog">{p.reading.source}</p>
@@ -362,6 +380,12 @@ function Breakdown({ ror, drainName }: { ror: NonNullable<ReturnType<typeof getR
               )}
             </div>
           ))}
+          {dhs.wqMissing.length > 0 && (
+            <p className="rounded-xl border border-dashed border-line bg-abyss p-3.5 text-[11px] leading-relaxed text-fog">
+              No public reading yet: {dhs.wqMissing.map((k) => WQ_LABELS[k]).join(", ")} —
+              excluded from Water Quality, weights redistributed to measured parameters.
+            </p>
+          )}
         </div>
 
         <div className="mt-4 space-y-2 text-[11px] leading-relaxed text-mist">
@@ -376,13 +400,14 @@ function Breakdown({ ror, drainName }: { ror: NonNullable<ReturnType<typeof getR
             </p>
           )}
           <p>
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-fog">Exposure · </span>
-            {input.exposureNote}
+            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-fog">Confidence · </span>
+            {input.confidence.note}
           </p>
-          <p>
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-fog">Reliability · </span>
-            {input.sourceCount} independent verified source{input.sourceCount === 1 ? "" : "s"} ·{" "}
-            {Math.min(100, input.sourceCount * 25)}/100
+          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-fog">
+            {input.confidence.officialSources} official reports ·{" "}
+            {input.confidence.volunteerVerified ? "field-verified" : "no field check yet"} ·{" "}
+            {input.confidence.liveSensor ? "live sensor" : "no live sensor"} ·{" "}
+            {input.confidence.droneImagery ? "drone imagery" : "no drones — by design"}
           </p>
         </div>
       </div>

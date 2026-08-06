@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DRAINS } from "@/data/drains";
 import type { Drain } from "@/data/drains";
-import { getRating } from "@/data/ror";
+import { getDhs } from "@/data/dhs";
 
 const MAP_PATH =
   "M150 20 C 60 70, 240 110, 150 165 C 60 220, 240 270, 150 325 C 60 380, 240 430, 150 485 C 110 520, 190 545, 150 615";
@@ -25,7 +25,7 @@ export default function DrainMap() {
   }, []);
 
   const isBig = useMemo(() => (d: Drain) => d.share !== null, []);
-  const rating = getRating(selected.id);
+  const rating = getDhs(selected.id);
 
   return (
     <section id="map" className="scroll-mt-24 border-y border-line bg-abyss py-20">
@@ -119,20 +119,16 @@ export default function DrainMap() {
                 <span
                   className="rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
                   style={{
-                    color: rating.band.name === "Critical" ? "#e9f1f5" : rating.band.hex,
-                    borderColor:
-                      rating.band.name === "Critical"
-                        ? "rgba(148,176,190,0.4)"
-                        : rating.band.hex + "55",
-                    background:
-                      rating.band.name === "Critical" ? "rgba(0,0,0,0.5)" : rating.band.hex + "12",
+                    color: rating.risk.name === "Critical" ? "#e9f1f5" : rating.risk.hex,
+                    borderColor: rating.risk.hex + "66",
+                    background: rating.risk.hex + "14",
                   }}
                 >
-                  RoRES {rating.total} · {rating.band.name}
+                  DHS {rating.total} · {rating.risk.name} risk
                 </span>
               ) : (
                 <span className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber">
-                  RoRES: awaiting public data
+                  DHS: awaiting public data
                 </span>
               )}
             </div>

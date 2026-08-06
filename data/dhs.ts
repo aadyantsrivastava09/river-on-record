@@ -1,15 +1,19 @@
 // ---------------------------------------------------------------------------
-// RoRES — RIVER ON RECORD ENVIRONMENTAL SCORE
+// DHS — DRAIN HEALTH SCORE  (FINAL SYSTEM)
 // ---------------------------------------------------------------------------
-// Every drain is scored 0–100. 100 = cleanest, 0 = most dangerous.
+// Every drain is scored 0–100. 100 = Excellent (healthy drain), 0 = Critical.
 //
-//   RoRES = 0.40(WQ) + 0.20(T) + 0.15(PL) + 0.15(ES) + 0.10(RS)
+//   DHS = 0.70(WQ) + 0.20(T) + 0.10(PL)
 //
-//   WQ  Water quality   (DO 30%, BOD 25%, pH 15%, Turbidity 15%, Waste/Foam 15%)
-//   T   Trend           (last 4 weeks — rewards improvement, not just conditions)
-//   PL  Pollution load  (daily discharge / share of load)
-//   ES  Exposure        (ghats, schools, farms, dense colonies near the outfall)
-//   RS  Reliability     (independent verified sources backing the score)
+//   WQ  Water quality  (DO 25%, BOD 25%, Ammonia 20%, pH 10%, Turbidity 10%,
+//                       Foam/Floating waste 10%) — thresholds per accepted
+//                       water-quality standards (CPCB/DPCC/US EPA/EEA)
+//   T   Trend          (major improvement 100 → major decline 0)
+//   PL  Pollution load (mass/volume of pollution entering the river)
+//
+// DISPLAYED SEPARATELY — never part of the score:
+//   Confidence (%)   — how certain we are the score is correct
+//   Risk level       — Low / Medium / High / Critical
 //
 // RULE: every input is a PUBLIC figure or a clearly-labelled inference.
 // No number is invented. Drains without usable public data stay unrated.
@@ -17,7 +21,7 @@
 
 export type TrendState = "muchBetter" | "better" | "same" | "worse" | "muchWorse";
 
-export type WqKey = "do" | "bod" | "ph" | "turbidity" | "waste";
+export type WqKey = "do" | "bod" | "ammonia" | "ph" | "turbidity" | "waste";
 
 export type WqReading = {
   value: number; // raw measurement (for "waste": 0–100 directly, 100 = clean)
@@ -25,43 +29,59 @@ export type WqReading = {
   inferred?: boolean; // labelled inference from nearest public point — never hidden
 };
 
-export type RorInput = {
+export type DhsConfidence = {
+  officialSources: number; // independent official/public reports backing the score
+  volunteerVerified: boolean; // team field verification at the outfall
+  liveSensor: boolean; // DJB/agency real-time monitor agreement
+  droneImagery: boolean; // aerial imagery (none — no-drone project by design)
+  note: string;
+};
+
+export type DhsInput = {
   drainId: number;
   wq: Partial<Record<WqKey, WqReading>>;
   trend: { state: TrendState; note: string };
   load?: { mgd?: number; share?: number; note: string };
-  exposurePenalty: number; // 0–100, subtracted from Exposure
-  exposureNote: string;
-  sourceCount: number; // independent verified public sources backing the score
+  confidence: DhsConfidence;
   prev?: { wq: Partial<Record<WqKey, WqReading>> }; // for the previous-period score
 };
 
 // --- constants --------------------------------------------------------------
 
-export const ROR_WEIGHTS = { wq: 0.4, trend: 0.2, pl: 0.15, es: 0.15, rs: 0.1 } as const;
+export const DHS_WEIGHTS = { wq: 0.7, trend: 0.2, pl: 0.1 } as const;
 
 export const WQ_WEIGHTS: Record<WqKey, number> = {
-  do: 0.3,
+  do: 0.25,
   bod: 0.25,
-  ph: 0.15,
-  turbidity: 0.15,
-  waste: 0.15,
+  ammonia: 0.2,
+  ph: 0.1,
+  turbidity: 0.1,
+  waste: 0.1,
 };
 
 export const WQ_LABELS: Record<WqKey, string> = {
   do: "Dissolved oxygen (DO)",
   bod: "BOD",
+  ammonia: "Ammonia (NH₃)",
   ph: "pH",
   turbidity: "Turbidity",
-  waste: "Floating waste / foam",
+  waste: "Foam / floating waste",
 };
 
 export const TREND_SCORES: Record<TrendState, number> = {
-  muchBetter: 100,
-  better: 75,
-  same: 50,
-  worse: 25,
-  muchWorse: 0,
+  muchBetter: 100, // Major improvement
+  better: 75, // Moderate improvement
+  same: 50, // Stable
+  worse: 25, // Moderate decline
+  muchWorse: 0, // Major decline
+};
+
+export const TREND_LABELS: Record<TrendState, string> = {
+  muchBetter: "Major improvement",
+  better: "Moderate improvement",
+  same: "Stable",
+  worse: "Moderate decline",
+  muchWorse: "Major decline",
 };
 
 export const TREND_GLYPH: Record<TrendState, { g: string; c: string }> = {
@@ -76,19 +96,17 @@ export const TREND_GLYPH: Record<TrendState, { g: string; c: string }> = {
 // is the normalisation ceiling for Pollution Load.
 export const MAX_MGD = 632;
 
-export type Band = { min: number; name: string; hex: string; blurb: string };
+export type RiskLevel = { min: number; name: string; hex: string; blurb: string };
 
-export const BANDS: Band[] = [
-  { min: 90, name: "Platinum", hex: "#2fbf8f", blurb: "Cleanest — near-natural conditions" },
-  { min: 75, name: "Gold", hex: "#5fd8a8", blurb: "Healthy, minor pressure" },
-  { min: 60, name: "Silver", hex: "#f0b429", blurb: "Impaired but recovering" },
-  { min: 45, name: "Bronze", hex: "#f97316", blurb: "Degraded — needs attention" },
-  { min: 25, name: "Watchlist", hex: "#f05252", blurb: "Dangerous — public alert" },
-  { min: 0, name: "Critical", hex: "#000000", blurb: "Most dangerous" },
+export const RISK_LEVELS: RiskLevel[] = [
+  { min: 75, name: "Low", hex: "#2fbf8f", blurb: "Low risk — healthy drain" },
+  { min: 60, name: "Medium", hex: "#f0b429", blurb: "Medium risk — impaired" },
+  { min: 45, name: "High", hex: "#f97316", blurb: "High risk — degraded" },
+  { min: 0, name: "Critical", hex: "#f05252", blurb: "Critical — severely polluted" },
 ];
 
-export function bandFor(score: number): Band {
-  return BANDS.find((b) => score >= b.min) ?? BANDS[BANDS.length - 1];
+export function riskFor(score: number): RiskLevel {
+  return RISK_LEVELS.find((r) => score >= r.min) ?? RISK_LEVELS[RISK_LEVELS.length - 1];
 }
 
 // --- scoring functions ------------------------------------------------------
@@ -101,6 +119,8 @@ function paramScore(key: WqKey, v: number): number {
       return clamp((100 * v) / 5);
     case "bod": // ≤ 3 mg/l → 100, 30 → 0 (standard ≤ 3)
       return clamp((100 * (30 - v)) / 27);
+    case "ammonia": // ≤ 0.5 mg/l (CPCB bathing standard) → 100, 10 → 0
+      return clamp((100 * (10 - v)) / 9.5);
     case "ph": // ideal 6.5–8.5 → 100, collapsing to 0 at 4 and 10
       if (v >= 6.5 && v <= 8.5) return 100;
       if (v < 6.5) return clamp((100 * (v - 4)) / 2.5);
@@ -119,7 +139,7 @@ export type WqDetail = {
   reading: WqReading;
 };
 
-function computeWq(wq: Partial<Record<WqKey, WqReading>>): { score: number; detail: WqDetail[] } {
+function computeWq(wq: Partial<Record<WqKey, WqReading>>): { score: number; detail: WqDetail[]; missing: WqKey[] } {
   const detail: WqDetail[] = (Object.keys(wq) as WqKey[]).map((k) => ({
     key: k,
     weight: WQ_WEIGHTS[k],
@@ -128,65 +148,80 @@ function computeWq(wq: Partial<Record<WqKey, WqReading>>): { score: number; deta
   }));
   const totalW = detail.reduce((s, d) => s + d.weight, 0);
   const score = totalW > 0 ? detail.reduce((s, d) => s + d.weight * d.score, 0) / totalW : 0;
-  return { score, detail };
+  const missing = (Object.keys(WQ_WEIGHTS) as WqKey[]).filter((k) => !(k in wq));
+  return { score, detail, missing };
 }
 
-function computeLoad(input: RorInput): number {
+function computeLoad(input: DhsInput): number {
   if (!input.load) return 0;
   const val = input.load.mgd ?? (input.load.share! / 68.71) * MAX_MGD; // share scaled to Najafgarh
   return clamp(100 * (1 - val / MAX_MGD));
 }
 
-export type RorResult = {
+export function computeConfidence(c: DhsConfidence): number {
+  let x = 40; // baseline: at least one official public report exists
+  x += Math.min(36, (c.officialSources - 1) * 12); // +12 per extra independent source
+  if (c.volunteerVerified) x += 12;
+  if (c.liveSensor) x += 12;
+  if (c.droneImagery) x += 12;
+  return clamp(x);
+}
+
+export type DhsResult = {
   drainId: number;
   wq: number;
   trend: number;
   pl: number;
-  es: number;
-  rs: number;
   total: number;
-  band: Band;
+  risk: RiskLevel;
   wqDetail: WqDetail[];
+  wqMissing: WqKey[];
+  confidence: number;
   prevTotal?: number;
-  prevBand?: Band;
+  prevRisk?: RiskLevel;
 };
 
-export function computeRor(input: RorInput): RorResult {
-  const { score: wq, detail: wqDetail } = computeWq(input.wq);
+export function computeDhs(input: DhsInput): DhsResult {
+  const { score: wq, detail: wqDetail, missing: wqMissing } = computeWq(input.wq);
   const trend = TREND_SCORES[input.trend.state];
   const pl = computeLoad(input);
-  const es = clamp(100 - input.exposurePenalty);
-  const rs = clamp(input.sourceCount * 25);
   const total = Math.round(
-    ROR_WEIGHTS.wq * wq +
-      ROR_WEIGHTS.trend * trend +
-      ROR_WEIGHTS.pl * pl +
-      ROR_WEIGHTS.es * es +
-      ROR_WEIGHTS.rs * rs
+    DHS_WEIGHTS.wq * wq + DHS_WEIGHTS.trend * trend + DHS_WEIGHTS.pl * pl
   );
+  const confidence = computeConfidence(input.confidence);
 
   let prevTotal: number | undefined;
-  let prevBand: Band | undefined;
+  let prevRisk: RiskLevel | undefined;
   if (input.prev) {
-    const p = computeRor({
+    const p = computeDhs({
       drainId: input.drainId,
       wq: input.prev.wq,
       trend: { state: "same", note: "" },
       load: input.load,
-      exposurePenalty: input.exposurePenalty,
-      exposureNote: input.exposureNote,
-      sourceCount: input.sourceCount,
+      confidence: input.confidence,
     });
     prevTotal = p.total;
-    prevBand = p.band;
+    prevRisk = p.risk;
   }
 
-  return { drainId: input.drainId, wq, trend, pl, es, rs, total, band: bandFor(total), wqDetail, prevTotal, prevBand };
+  return {
+    drainId: input.drainId,
+    wq,
+    trend,
+    pl,
+    total,
+    risk: riskFor(total),
+    wqDetail,
+    wqMissing,
+    confidence,
+    prevTotal,
+    prevRisk,
+  };
 }
 
 // --- rated drains (public data only) ----------------------------------------
 
-export const ROR_INPUTS: RorInput[] = [
+export const DHS_INPUTS: DhsInput[] = [
   {
     // Najafgarh — 68.71% of the drain load
     drainId: 1,
@@ -201,9 +236,13 @@ export const ROR_INPUTS: RorInput[] = [
       note: "DO at Wazirabad fell 6.8 → 3.1 (DPCC 2025 → May 2026)",
     },
     load: { mgd: 632, note: "~632 MGD (DJB reassessment May 2026: revised ~862 MGD)" },
-    exposurePenalty: 60,
-    exposureNote: "Floodplain farms (Asghar Ali study), dense colonies, Category D wetland at outfall",
-    sourceCount: 4, // SPRF · DJB · DPCC · NGT
+    confidence: {
+      officialSources: 4, // SPRF · DJB · DPCC · NGT
+      volunteerVerified: true, // team visual checks during YIS 2026 field research
+      liveSensor: false, // no DJB real-time monitor on this drain yet
+      droneImagery: false, // no-drone project by design
+      note: "4 independent official reports + field verification. No live sensor on this drain.",
+    },
     prev: {
       wq: {
         do: { value: 6.8, source: "DPCC 2025 — Wazirabad station", inferred: true },
@@ -227,16 +266,20 @@ export const ROR_INPUTS: RorInput[] = [
       note: "BOD stable 2020 → 2024 (Delhi Dept of Environment annual averages)",
     },
     load: { share: 10.9, note: "10.9% of 22-drain load (SPRF Mar 2026); 45% of flow arrives from UP" },
-    exposurePenalty: 55,
-    exposureNote: "Dense residential (Sahibabad/Loni), farms at confluence, Noida colonies downstream",
-    sourceCount: 3, // SPRF · DPCC · CPCB
+    confidence: {
+      officialSources: 3, // SPRF · DPCC · CPCB
+      volunteerVerified: true, // team visual checks during YIS 2026 field research
+      liveSensor: false,
+      droneImagery: false,
+      note: "3 independent official reports + field verification. No live sensor on this drain.",
+    },
   },
 ];
 
-const RATINGS: Record<number, RorResult> = Object.fromEntries(
-  ROR_INPUTS.map((i) => [i.drainId, computeRor(i)])
+const RESULTS: Record<number, DhsResult> = Object.fromEntries(
+  DHS_INPUTS.map((i) => [i.drainId, computeDhs(i)])
 );
 
-export function getRating(drainId: number): RorResult | undefined {
-  return RATINGS[drainId];
+export function getDhs(drainId: number): DhsResult | undefined {
+  return RESULTS[drainId];
 }
