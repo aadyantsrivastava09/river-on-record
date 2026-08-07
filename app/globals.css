@@ -17,6 +17,12 @@
   --color-dead-dim: #8f2f2f;
   --color-cyan: #56c8e8;
 
+  /* Vantalyne Labs brand */
+  --color-vl-maroon: #521d21;
+  --color-vl-navy: #133247;
+  --color-vl-steel: #607890;
+  --color-vl-cream: #fff6e7;
+
   --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
@@ -96,4 +102,61 @@ body {
 }
 .animate-rise {
   animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes ring {
+  0% { transform: scale(0.45); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.marker-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring 2.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+.animate-floaty {
+  animation: floaty 6s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.animate-breathe {
+  animation: breathe 3.2s ease-in-out infinite;
+}
+
+/* soft halo behind the animated river */
+.river-glow {
+  filter: blur(10px);
+  opacity: 0.32;
+}
+
+/* current flowing downstream along the river path */
+@keyframes flow {
+  to { stroke-dashoffset: -36; }
+}
+.animate-flow {
+  animation: flow 2.4s linear infinite;
+}
+
+/* gentle rise used on the hero "river alive" bubbles */
+@keyframes bob {
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  50% { transform: translateY(-8px); opacity: 0.9; }
+}
+.animate-bob {
+  animation: bob 4.5s ease-in-out infinite;
+}
+
+/* horizontal current along the 22 km transect strip (left → right) */
+@keyframes flow-x {
+  to { stroke-dashoffset: -40; }
+}
+.animate-flow-x {
+  animation: flow-x 2.8s linear infinite;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DRAINS } from "@/data/drains";
+import { DRAINS, STATUS_COLORS } from "@/data/drains";
 import {
   DHS_INPUTS,
   RISK_LEVELS,
@@ -11,8 +11,9 @@ import {
   getDhs,
 } from "@/data/dhs";
 import type { DhsResult, RiskLevel, TrendState } from "@/data/dhs";
+import Reveal from "@/components/Reveal";
 
-type SortKey = "score" | "rank" | "share" | "name";
+type SortKey = "score" | "rank" | "load" | "name";
 
 const COMPONENTS = [
   { label: "Water quality", weight: "70%", key: "wq" as const },
@@ -56,8 +57,8 @@ export default function Scoreboard() {
       case "name":
         r.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case "share":
-        r.sort((a, b) => (b.share ?? -1) - (a.share ?? -1));
+      case "load":
+        r.sort((a, b) => (b.dischargePct ?? -1) - (a.dischargePct ?? -1));
         break;
       case "score": {
         r.sort((a, b) => {
@@ -89,6 +90,7 @@ export default function Scoreboard() {
 
   return (
     <section id="scoreboard" className="scroll-mt-24 py-20">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <p className="label mb-3">The product</p>
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -106,20 +108,67 @@ export default function Scoreboard() {
         <div className="mt-8 rounded-2xl border border-alive/25 bg-alive/[0.05] p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="font-display text-sm font-bold text-alive">
-              DHS — Drain Health Score
+              The score, in one line
             </p>
             <span className="rounded-full border border-alive/40 bg-alive/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-alive">
               Live · 0–100 · 100 = healthy drain
             </span>
           </div>
-          <p className="mt-3 max-w-3xl font-mono text-xs leading-relaxed text-mist">
-            DHS = 0.70 · Water Quality + 0.20 · Trend + 0.10 · Pollution Load
-          </p>
-          <p className="mt-2 max-w-3xl text-xs leading-relaxed text-fog">
-            Water quality dominates — DO 25%, BOD 25%, Ammonia 20%, pH 10%, Turbidity 10%,
-            Foam/Waste 10% — each converted to 0–100 against accepted standards (CPCB,
-            DPCC, US EPA, EEA). The Trend term rewards improvement, not just good
-            conditions. Confidence and Risk are shown separately — they never change the score.
+
+          <div className="mt-5 flex flex-wrap items-center gap-2 font-mono text-[13px] sm:text-sm">
+            <span className="rounded-lg border border-alive/50 bg-alive/15 px-3 py-1.5 font-bold text-alive">
+              DHS
+            </span>
+            <span className="text-fog">=</span>
+            <span className="rounded-lg border border-line-strong bg-panel px-3 py-1.5 text-snow">
+              0.70 · <span className="font-bold text-alive">Water Quality</span>
+            </span>
+            <span className="text-fog">+</span>
+            <span className="rounded-lg border border-line-strong bg-panel px-3 py-1.5 text-snow">
+              0.20 · <span className="font-bold text-amber">Trend</span>
+            </span>
+            <span className="text-fog">+</span>
+            <span className="rounded-lg border border-line-strong bg-panel px-3 py-1.5 text-snow">
+              0.10 · <span className="font-bold text-dead">Pollution Load</span>
+            </span>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {[
+              {
+                k: "Water Quality",
+                w: "70% of the score",
+                desc: "What's actually in the water — oxygen, sewage, ammonia, pH, turbidity — checked against legal standards.",
+                c: "#2fbf8f",
+              },
+              {
+                k: "Trend",
+                w: "20% of the score",
+                desc: "Rewards drains that are improving, not just the ones that test clean today.",
+                c: "#f0b429",
+              },
+              {
+                k: "Pollution Load",
+                w: "10% of the score",
+                desc: "Counts how much the drain dumps — a small weight, a big story.",
+                c: "#f05252",
+              },
+            ].map((x) => (
+              <div key={x.k} className="rounded-xl border border-line bg-panel2 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-display text-xs font-bold text-snow">{x.k}</p>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color: x.c }}>
+                    {x.w}
+                  </span>
+                </div>
+                <p className="mt-2 text-[11.5px] leading-relaxed text-fog">{x.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 text-[11.5px] leading-relaxed text-fog">
+            Confidence and Risk are shown separately — they never change the score. Every
+            input traces to a public report; nothing is estimated where a number exists.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {RISK_LEVELS.map((r, i) => {
@@ -150,7 +199,7 @@ export default function Scoreboard() {
           <div className="flex gap-6">
             {sortBtn("score", "Sort · Score")}
             {sortBtn("rank", "Sort · ID")}
-            {sortBtn("share", "Sort · Load")}
+            {sortBtn("load", "Sort · Load")}
             {sortBtn("name", "Sort · A–Z")}
           </div>
           <div className="flex items-center gap-3">
@@ -168,16 +217,17 @@ export default function Scoreboard() {
 
         {/* table */}
         <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
-          <table className="w-full min-w-[840px] border-collapse text-left">
+          <table className="w-full min-w-[960px] border-collapse text-left">
             <thead>
               <tr className="border-b border-line bg-panel">
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">#</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Drain</th>
+                <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Status</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">DHS</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Trend</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Confidence</th>
-                <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Worst public reading</th>
-                <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Load share</th>
+                <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">Discharge</th>
+                <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog">BOD load</th>
               </tr>
             </thead>
             <tbody>
@@ -203,9 +253,10 @@ export default function Scoreboard() {
         </div>
 
         <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-fog/70">
-          Sources: DPCC monthly Yamuna report · CPCB · DJB · NGT orders · SPRF (Mar 2026) · CSE/The Tribune
+          Sources: DPCC monthly drain reports · DJB · CPCB · NGT orders · HT/ANI/The Hindu citing official data
         </p>
       </div>
+      </Reveal>
     </section>
   );
 }
@@ -238,6 +289,19 @@ function FragmentRow({
         <td className="px-4 py-3.5">
           <p className="font-display text-sm font-semibold text-snow">{d.name}</p>
           <p className="mt-0.5 max-w-[240px] text-[11px] leading-snug text-fog">{d.note}</p>
+        </td>
+        <td className="px-4 py-3.5">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em]"
+            style={{
+              color: STATUS_COLORS[d.status],
+              borderColor: STATUS_COLORS[d.status] + "55",
+              background: STATUS_COLORS[d.status] + "12",
+            }}
+          >
+            {d.status}
+            {d.noFlow && <span className="text-fog/80"> · no flow</span>}
+          </span>
         </td>
         <td className="px-4 py-3.5">
           {dhs ? (
@@ -276,12 +340,16 @@ function FragmentRow({
             <span className="font-mono text-xs text-fog/60">—</span>
           )}
         </td>
-        <td className="px-4 py-3.5 text-xs text-mist">
-          {d.worst ?? <span className="text-fog/60">Awaiting public report</span>}
+        <td className="px-4 py-3.5">
+          {d.dischargePct != null ? (
+            <span className="font-mono text-sm font-semibold text-snow">{d.dischargePct.toFixed(2)}%</span>
+          ) : (
+            <span className="font-mono text-xs text-fog/60">—</span>
+          )}
         </td>
         <td className="px-4 py-3.5">
-          {d.share !== null ? (
-            <span className="font-mono text-sm font-semibold text-snow">{d.share.toFixed(1)}%</span>
+          {d.bodPct != null ? (
+            <span className="font-mono text-sm font-semibold text-snow">{d.bodPct.toFixed(2)}%</span>
           ) : (
             <span className="font-mono text-xs text-fog/60">—</span>
           )}
@@ -289,7 +357,7 @@ function FragmentRow({
       </tr>
       {open && dhs && (
         <tr className="border-b border-line/60 bg-panel/70">
-          <td colSpan={7} className="px-6 py-6">
+          <td colSpan={8} className="px-6 py-6">
             <Breakdown dhs={dhs} drainName={d.name} />
           </td>
         </tr>

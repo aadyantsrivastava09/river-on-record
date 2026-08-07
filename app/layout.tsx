@@ -20,8 +20,9 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "River on Record — The Public Drain Scoreboard for the Yamuna",
   description:
-    "Every drain that kills the Yamuna, rated and published weekly. Built entirely on public government data — the 41 real-time monitors, DPCC, CPCB, DJB and NGT records. No hardware. No excuses.",
-  keywords: ["Yamuna", "River on Record", "pollution", "drains", "Delhi", "SDG 13", "citizen data"],
+    "Every drain that kills the Yamuna, rated and published weekly. Built entirely on public government data — DPCC, CPCB, DJB and NGT records, 27 monitoring locations. No hardware. No excuses.",
+  keywords: ["Yamuna", "River on Record", "pollution", "drains", "Delhi", "citizen data"],
+  icons: { icon: "/vantalyne-navy.png" },
 };
 
 export default function RootLayout({

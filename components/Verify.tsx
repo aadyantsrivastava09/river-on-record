@@ -1,3 +1,5 @@
+import Reveal from "@/components/Reveal";
+
 export default function Verify() {
   const chain = [
     { hash: "0x9f2e…41c7", label: "Weekly Bulletin #1 · DO 5.9→0.0", state: "committed" },
@@ -7,6 +9,7 @@ export default function Verify() {
 
   return (
     <section id="verify" className="scroll-mt-24 border-y border-line bg-abyss py-20">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <p className="label mb-3">The honesty layer</p>
         <h2 className="font-display text-3xl font-bold tracking-tight text-snow sm:text-4xl">
@@ -52,6 +55,7 @@ export default function Verify() {
           </div>
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }

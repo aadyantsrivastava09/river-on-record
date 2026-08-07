@@ -1,3 +1,5 @@
+import Reveal from "@/components/Reveal";
+
 export default function People() {
   const groups = [
     {
@@ -5,26 +7,27 @@ export default function People() {
       stat: "55.6%",
       statLabel: "of river-using households report waterborne illness",
       body: "Every November, thousands wade into water that failed every legal standard the day they did. They are not statistics — they are the reason the scoreboard is public.",
-      source: "Delhi University study · YIS Research Pack",
+      source: "Delhi University study · Public research pack",
     },
     {
       title: "Farmers of the floodplains",
       stat: "49%",
       statLabel: "of floodplain farmers earn under ₹10,000 a month",
       body: "They irrigate with this water and sell what it grows. They cannot afford to test it — so we publish what the state already measured about it.",
-      source: "Asghar Ali Engineers · YIS Research Pack",
+      source: "Asghar Ali Engineers · Public research pack",
     },
     {
       title: "The last boatmen",
       stat: "3",
       statLabel: "active boatmen remain on the Okhla stretch",
       body: "A fishing economy that once fed families now survives on ferry rides. The river's collapse is measured in their shrinking count — the scoreboard names the reason.",
-      source: "Community reports · YIS Research Pack",
+      source: "Community reports · Public research pack",
     },
   ];
 
   return (
     <section id="people" className="scroll-mt-24 py-20">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <p className="label mb-3">Who bears it</p>
         <h2 className="font-display text-3xl font-bold tracking-tight text-snow sm:text-4xl">
@@ -49,6 +52,7 @@ export default function People() {
           ))}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }

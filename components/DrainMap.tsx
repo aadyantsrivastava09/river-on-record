@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DRAINS } from "@/data/drains";
+import { DRAINS, STATUS_COLORS } from "@/data/drains";
 import type { Drain } from "@/data/drains";
 import { getDhs } from "@/data/dhs";
-
-const MAP_PATH =
-  "M150 20 C 60 70, 240 110, 150 165 C 60 220, 240 270, 150 325 C 60 380, 240 430, 150 485 C 110 520, 190 545, 150 615";
+import Reveal from "@/components/Reveal";
+import { RIVER_PATH } from "@/lib/river";
 
 export default function DrainMap() {
   const pathRef = useRef<SVGPathElement>(null);
@@ -16,19 +15,20 @@ export default function DrainMap() {
   useEffect(() => {
     if (!pathRef.current) return;
     const total = pathRef.current.getTotalLength();
-    const map: Record<number, { x: number; y: number }> = {};
+    const out: Record<number, { x: number; y: number }> = {};
     for (const d of DRAINS) {
       const pt = pathRef.current!.getPointAtLength(d.pos * total);
-      map[d.id] = { x: pt.x, y: pt.y };
+      out[d.id] = { x: pt.x, y: pt.y };
     }
-    setPts(map);
+    setPts(out);
   }, []);
 
-  const isBig = useMemo(() => (d: Drain) => d.share !== null, []);
+  const isBig = useMemo(() => (d: Drain) => d.dischargePct !== null, []);
   const rating = getDhs(selected.id);
 
   return (
     <section id="map" className="scroll-mt-24 border-y border-line bg-abyss py-20">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <p className="label mb-3">The geography</p>
         <h2 className="font-display text-3xl font-bold tracking-tight text-snow sm:text-4xl">
@@ -51,8 +51,41 @@ export default function DrainMap() {
                   <stop offset="100%" stopColor="#f05252" />
                 </linearGradient>
               </defs>
-              <path ref={pathRef} d={MAP_PATH} fill="none" stroke="url(#mapGrad)" strokeWidth="10" strokeLinecap="round" opacity="0.14" />
-              <path d={MAP_PATH} fill="none" stroke="url(#mapGrad)" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
+              <path ref={pathRef} d={RIVER_PATH} fill="none" stroke="none" />
+              <path
+                d={RIVER_PATH}
+                fill="none"
+                stroke="url(#mapGrad)"
+                strokeWidth={24}
+                strokeLinecap="round"
+                className="river-glow"
+              />
+
+              {/* river bed + crisp line — smooth rendering */}
+              <path
+                d={RIVER_PATH}
+                fill="none"
+                stroke="url(#mapGrad)"
+                strokeWidth="14"
+                strokeLinecap="round"
+                opacity="0.18"
+              />
+              <path
+                d={RIVER_PATH}
+                fill="none"
+                stroke="url(#mapGrad)"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              />
+
+              <path
+                d={RIVER_PATH}
+                fill="none"
+                stroke="rgba(233,241,245,0.4)"
+                strokeWidth={1.6}
+                strokeDasharray="3 9"
+                className="animate-flow"
+              />
 
               {Object.entries(pts).map(([id, p]) => {
                 const d = DRAINS.find((x) => x.id === Number(id))!;
@@ -75,7 +108,19 @@ export default function DrainMap() {
                       strokeWidth={active ? 2.5 : 1.5}
                     />
                     {isBig(d) && (
-                      <circle cx={p.x} cy={p.y} r={r + 3} fill="none" stroke="#f05252" strokeWidth="1" strokeDasharray="2 2" />
+                      <>
+                        {/* pulsing ring on the biggest drains */}
+                        <circle
+                          cx={p.x}
+                          cy={p.y}
+                          r={r}
+                          fill="none"
+                          stroke="#f05252"
+                          strokeWidth="1.5"
+                          className="marker-ring"
+                        />
+                        <circle cx={p.x} cy={p.y} r={r + 3} fill="none" stroke="#f05252" strokeWidth="1" strokeDasharray="2 2" />
+                      </>
                     )}
                   </g>
                 );
@@ -87,31 +132,50 @@ export default function DrainMap() {
           <div className="card p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="label">Drain #{String(selected.id).padStart(2, "0")}</p>
+                <p className="label">Drain #{String(selected.id).padStart(2, "0")} · {selected.bank} bank</p>
                 <h3 className="mt-1 font-display text-2xl font-bold text-snow">{selected.name}</h3>
               </div>
-              {selected.share !== null && (
+              {selected.dischargePct !== null && (
                 <div className="text-right">
-                  <p className="font-display text-3xl font-bold text-dead">{selected.share.toFixed(1)}%</p>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">of total load</p>
+                  <p className="font-display text-3xl font-bold text-dead">{selected.dischargePct.toFixed(1)}%</p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">of total flow</p>
                 </div>
               )}
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-line bg-panel2 p-4">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">Discharge</p>
-                <p className="mt-1 text-sm font-semibold text-snow">{selected.discharge ?? "Not in public reports yet"}</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">Discharge share</p>
+                <p className="mt-1 text-sm font-semibold text-snow">
+                  {selected.dischargePct != null
+                    ? `${selected.dischargePct}% of 22-drain flow (DPCC 2025)`
+                    : "Not in public reports yet"}
+                </p>
               </div>
               <div className="rounded-xl border border-line bg-panel2 p-4">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">BOD at outfall</p>
-                <p className="mt-1 text-sm font-semibold text-snow">{selected.bod ?? "Not in public reports yet"}</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">BOD load</p>
+                <p className="mt-1 text-sm font-semibold text-snow">
+                  {selected.bodPct != null
+                    ? `${selected.bodPct}% of total BOD (DPCC 2025)`
+                    : "Not in public reports yet"}
+                </p>
               </div>
             </div>
 
             <p className="mt-5 text-sm leading-relaxed text-mist">{selected.note}</p>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
+              <span
+                className="rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+                style={{
+                  color: STATUS_COLORS[selected.status],
+                  borderColor: STATUS_COLORS[selected.status] + "55",
+                  background: STATUS_COLORS[selected.status] + "12",
+                }}
+              >
+                {selected.status}
+                {selected.noFlow && <span className="text-fog/80"> · no flow</span>}
+              </span>
               <span className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-fog">
                 Source: {selected.source}
               </span>
@@ -135,6 +199,7 @@ export default function DrainMap() {
           </div>
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }

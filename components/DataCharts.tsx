@@ -3,6 +3,7 @@
 import Chart, { AXIS, TOOLTIP } from "@/components/Chart";
 import type { EChartsOption } from "echarts";
 import { BOD_TREND, DO_FC, LOAD_SPLIT } from "@/data/drains";
+import Reveal from "@/components/Reveal";
 
 const SITES = DO_FC.map((p) => p.site);
 
@@ -132,6 +133,7 @@ const loadOption: EChartsOption = {
 export default function DataCharts() {
   return (
     <section id="data" className="scroll-mt-24 py-20">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <p className="label mb-3">The evidence · public data only</p>
         <h2 className="font-display text-3xl font-bold tracking-tight text-snow sm:text-4xl">
@@ -187,12 +189,13 @@ export default function DataCharts() {
             </div>
             <Chart option={loadOption} className="h-72 w-full" />
             <p className="mt-3 text-xs leading-relaxed text-fog">
-              Najafgarh alone carries 68.71% of the wastewater. Shahdara adds 10.9%. The
+              Najafgarh alone carries 69.77% of the drain flow; Shahdara adds 16.12%. The
               scoreboard starts here — and it names every one of the other twenty too.
             </p>
           </div>
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }

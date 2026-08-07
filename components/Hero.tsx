@@ -1,11 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { DO_FC, FACTS, TICKER_ITEMS } from "@/data/drains";
+import { DO_FC, TICKER_ITEMS } from "@/data/drains";
+import CountUp from "@/components/CountUp";
+import { RIVER_PATH } from "@/lib/river";
 
-const RIVER_PATH =
-  "M150 20 C 60 70, 240 110, 150 165 C 60 220, 240 270, 150 325 C 60 380, 240 430, 150 485 C 110 520, 190 545, 150 615";
+// Numeric targets for the animated counters — values match the FACTS strings above,
+// so the count-up lands exactly on the published figure.
+const COUNT_FACTS = [
+  { label: "of river carrying >80% of the pollution — alive at Palla, dead at Okhla", to: 22, decimals: 0, unit: "km" },
+  { label: "of drain flow pouring in every day (DJB, May 2026)", to: 1324.4, decimals: 1, unit: "MGD" },
+  { label: "of 27 drains failed water-quality standards — only one passed", to: 26, decimals: 0, unit: "/27" },
+  { label: "from one drain — Najafgarh, more than all 37 STPs combined", to: 862, decimals: 0, unit: "MGD", prefix: "~" },
+  { label: "of the pollution load from just two drains — Najafgarh + Shahdara", to: 87, decimals: 0, unit: "%" },
+];
+
+const MARKER_FRACS = [0.05, 0.17, 0.36, 0.5, 0.64, 0.8, 0.95];
 
 type Marker = { x: number; y: number; site: string; do2026: number; fc: number };
 
@@ -20,14 +32,14 @@ function RiverSVG() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [len, setLen] = useState(0);
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
 
   useEffect(() => {
     if (!pathRef.current) return;
     const total = pathRef.current.getTotalLength();
     setLen(total);
-    const fracs = [0.05, 0.17, 0.36, 0.5, 0.64, 0.8, 0.95];
     const pts = DO_FC.map((p, i) => {
-      const pt = pathRef.current!.getPointAtLength(fracs[i] * total);
+      const pt = pathRef.current!.getPointAtLength(MARKER_FRACS[i] * total);
       return { x: pt.x, y: pt.y, site: p.site, do2026: p.do2026, fc: p.fc };
     });
     setMarkers(pts);
@@ -40,7 +52,21 @@ function RiverSVG() {
   const pathLength = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
-    <div ref={wrapRef} className="relative mx-auto w-full max-w-[340px]">
+    <div
+      ref={wrapRef}
+      className="relative mx-auto w-full max-w-[340px]"
+      style={{
+        transform: `perspective(900px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
+        transition: "transform 0.25s ease-out",
+      }}
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        setTilt({ rx: -py * 4, ry: px * 6 });
+      }}
+      onMouseLeave={() => setTilt({ rx: 0, ry: 0 })}
+    >
       <div className="relative">
         <svg viewBox="0 0 300 640" className="w-full">
           <defs>
@@ -53,7 +79,17 @@ function RiverSVG() {
             </linearGradient>
           </defs>
 
-          {/* river bed */}
+          {/* glow halo — smooth, behind the river */}
+          <path
+            d={RIVER_PATH}
+            fill="none"
+            stroke="url(#riverGrad)"
+            strokeWidth={20}
+            strokeLinecap="round"
+            className="river-glow"
+          />
+
+          {/* river bed + crisp line — the original smooth rendering */}
           <motion.path
             ref={pathRef}
             d={RIVER_PATH}
@@ -72,6 +108,16 @@ function RiverSVG() {
             style={{ pathLength }}
           />
 
+          {/* current: dashes flowing downstream */}
+          <path
+            d={RIVER_PATH}
+            fill="none"
+            stroke="rgba(233,241,245,0.4)"
+            strokeWidth={1.6}
+            strokeDasharray="3 9"
+            className="animate-flow"
+          />
+
           {/* km rail */}
           {[0, 5, 10, 15, 22].map((km) => (
             <g key={km} opacity={0.5}>
@@ -82,6 +128,31 @@ function RiverSVG() {
             </g>
           ))}
 
+          {/* oxygen bubbles upstream, where the river is still alive */}
+          {len > 0 &&
+            [
+              [0.02, "#2fbf8f", -12],
+              [0.06, "#56c8e8", 12],
+              [0.1, "#56c8e8", -12],
+              [0.13, "#2fbf8f", 12],
+              [0.05, "#56c8e8", -10],
+            ].map(([f, c, dx], i) => {
+              const pt = pathRef.current?.getPointAtLength((f as number) * len);
+              if (!pt) return null;
+              return (
+                <circle
+                  key={i}
+                  cx={pt.x + (dx as number)}
+                  cy={pt.y - 6}
+                  r={i % 2 === 0 ? 2.2 : 3}
+                  fill={c as string}
+                  className="animate-bob"
+                  style={{ animationDelay: `${i * 0.6}s` }}
+                />
+              );
+            })}
+
+          {/* DO station markers */}
           {markers.map((m, i) => (
             <g key={m.site}>
               <line
@@ -93,6 +164,9 @@ function RiverSVG() {
                 strokeWidth="1"
                 strokeDasharray="3 3"
               />
+              {m.do2026 <= 0 && (
+                <circle cx={m.x} cy={m.y} r="6.5" fill="none" stroke="#f05252" strokeWidth="1.5" className="marker-ring" />
+              )}
               <circle
                 cx={m.x}
                 cy={m.y}
@@ -158,8 +232,24 @@ export default function Hero() {
       <div className="relative mx-auto max-w-6xl px-6">
         <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
+            {/* Vantalyne Labs branding */}
+            <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-line bg-panel px-4 py-1.5 animate-rise">
+              <span className="grid h-6 w-6 place-items-center rounded-md bg-vl-cream">
+                <Image
+                  src="/vantalyne-navy.png"
+                  alt="Vantalyne Labs"
+                  width={291}
+                  height={272}
+                  className="h-3.5 w-auto"
+                />
+              </span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-fog">
+                A Vantalyne Labs venture
+              </span>
+            </div>
+
             <p className="label mb-5 animate-rise">
-              Youth Impact Summit 2026 · SDG 13 · Built entirely on public government data
+              Built entirely on public government data
             </p>
 
             <h1 className="font-display text-4xl font-bold leading-[1.06] tracking-tight text-snow sm:text-5xl lg:text-[3.4rem] animate-rise">
@@ -171,7 +261,7 @@ export default function Hero() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base leading-relaxed text-mist animate-rise">
-              Rs 8,000 crore. 30 years of plans. 41 government real-time monitors.
+              Rs 8,000 crore. 30 years of plans. 27 government monitoring points.
               And still, no citizen, journalist or court can get a straight answer to one
               question:{" "}
               <span className="text-snow font-semibold">
@@ -213,10 +303,11 @@ export default function Hero() {
 
         {/* facts strip */}
         <div className="mt-16 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3 lg:grid-cols-5">
-          {FACTS.map((f) => (
+          {COUNT_FACTS.map((f) => (
             <div key={f.label} className="bg-abyss p-5">
               <p className="font-display text-2xl font-bold text-snow sm:text-[1.7rem]">
-                {f.value}
+                {f.prefix && <span className="mr-1 font-mono text-sm font-normal text-fog">{f.prefix}</span>}
+                <CountUp value={f.to} decimals={f.decimals} />
                 {f.unit && <span className="ml-1 font-mono text-xs font-normal text-fog">{f.unit}</span>}
               </p>
               <p className="mt-2 text-[11.5px] leading-snug text-fog">{f.label}</p>
@@ -233,6 +324,30 @@ export default function Hero() {
                 {t}
               </span>
             ))}
+          </div>
+        </div>
+
+        {/* what is Vantalyne Labs */}
+        <div className="mt-12 flex flex-col items-start gap-5 rounded-2xl border border-line bg-panel p-6 sm:flex-row sm:items-center sm:p-8">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-vl-cream">
+            <Image
+              src="/vantalyne-navy.png"
+              alt="Vantalyne Labs"
+              width={291}
+              height={272}
+              className="h-7 w-auto"
+            />
+          </span>
+          <div>
+            <p className="font-display text-sm font-bold tracking-wide text-snow">
+              What is Vantalyne Labs?
+            </p>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-mist">
+              Vantalyne Labs is a youth-led ecosystem of builders. It never takes equity from
+              founder-brought ventures, and support never costs ownership — once something is built
+              here, it carries that history permanently. River on Record is one of those ventures:
+              conceived, built, and published under the Vantalyne Labs name.
+            </p>
           </div>
         </div>
       </div>

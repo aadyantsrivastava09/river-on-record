@@ -1,3 +1,5 @@
+import Reveal from "@/components/Reveal";
+
 export default function Forecast() {
   const days = [
     { day: "Today", place: "Kalindi Kunj", risk: "HIGH", tone: "text-dead border-dead/40 bg-dead/10", time: "12:00–18:00" },
@@ -7,6 +9,7 @@ export default function Forecast() {
 
   return (
     <section id="forecast" className="scroll-mt-24 border-y border-line bg-abyss py-20">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <p className="label mb-3">Coming soon · built on public monitor data</p>
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -53,6 +56,7 @@ export default function Forecast() {
           Forecast model is the next build — it uses only public monitor streams, same as the scoreboard.
         </p>
       </div>
+      </Reveal>
     </section>
   );
 }

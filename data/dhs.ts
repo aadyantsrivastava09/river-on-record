@@ -19,6 +19,8 @@
 // No number is invented. Drains without usable public data stay unrated.
 // ---------------------------------------------------------------------------
 
+import { DRAINS } from "@/data/drains";
+
 export type TrendState = "muchBetter" | "better" | "same" | "worse" | "muchWorse";
 
 export type WqKey = "do" | "bod" | "ammonia" | "ph" | "turbidity" | "waste";
@@ -41,7 +43,7 @@ export type DhsInput = {
   drainId: number;
   wq: Partial<Record<WqKey, WqReading>>;
   trend: { state: TrendState; note: string };
-  load?: { mgd?: number; share?: number; note: string };
+  load?: { note: string };
   confidence: DhsConfidence;
   prev?: { wq: Partial<Record<WqKey, WqReading>> }; // for the previous-period score
 };
@@ -92,9 +94,9 @@ export const TREND_GLYPH: Record<TrendState, { g: string; c: string }> = {
   muchWorse: { g: "▼▼", c: "#f05252" },
 };
 
-// Najafgarh's published discharge (SPRF Mar 2026 / DJB reassessment May 2026)
-// is the normalisation ceiling for Pollution Load.
-export const MAX_MGD = 632;
+// Najafgarh carries the largest share of the 22-drain discharge (DPCC 2025) —
+// the normalisation ceiling for Pollution Load.
+export const MAX_DISCHARGE_PCT = 69.77;
 
 export type RiskLevel = { min: number; name: string; hex: string; blurb: string };
 
@@ -154,8 +156,9 @@ function computeWq(wq: Partial<Record<WqKey, WqReading>>): { score: number; deta
 
 function computeLoad(input: DhsInput): number {
   if (!input.load) return 0;
-  const val = input.load.mgd ?? (input.load.share! / 68.71) * MAX_MGD; // share scaled to Najafgarh
-  return clamp(100 * (1 - val / MAX_MGD));
+  const pct = DRAINS.find((d) => d.id === input.drainId)?.dischargePct;
+  if (pct == null || pct <= 0) return 100; // tapped / no measurable outfall — no load
+  return clamp(100 * (1 - pct / MAX_DISCHARGE_PCT));
 }
 
 export function computeConfidence(c: DhsConfidence): number {
@@ -223,11 +226,11 @@ export function computeDhs(input: DhsInput): DhsResult {
 
 export const DHS_INPUTS: DhsInput[] = [
   {
-    // Najafgarh — 68.71% of the drain load
+    // Najafgarh — 69.77% of the 22-drain discharge (DPCC 2025)
     drainId: 1,
     wq: {
       do: { value: 3.1, source: "DPCC May 2026 — Wazirabad station (nearest point below outfall)", inferred: true },
-      bod: { value: 96, source: "SPRF Mar 2026 — 96 mg/l at discharge (drain standard ≤ 10)" },
+      bod: { value: 60, source: "DPCC Oct 2025 via HT — BOD 60 mg/L at Najafgarh outfall (norm ≤ 30)" },
       ph: { value: 7.5, source: "DPCC river pH range 2025–26", inferred: true },
       waste: { value: 30, source: "Foam episodes documented — NGT orders 2022; media Nov 2025" },
     },
@@ -235,10 +238,10 @@ export const DHS_INPUTS: DhsInput[] = [
       state: "worse",
       note: "DO at Wazirabad fell 6.8 → 3.1 (DPCC 2025 → May 2026)",
     },
-    load: { mgd: 632, note: "~632 MGD (DJB reassessment May 2026: revised ~862 MGD)" },
+    load: { note: "69.77% of 22-drain discharge ≈ ~862 MGD (DJB May 2026) — more than all 37 STPs combined (814.23 MGD)" },
     confidence: {
-      officialSources: 4, // SPRF · DJB · DPCC · NGT
-      volunteerVerified: true, // team visual checks during YIS 2026 field research
+      officialSources: 4, // DPCC · DJB · HT · NGT
+      volunteerVerified: true, // team field checks
       liveSensor: false, // no DJB real-time monitor on this drain yet
       droneImagery: false, // no-drone project by design
       note: "4 independent official reports + field verification. No live sensor on this drain.",
@@ -246,18 +249,18 @@ export const DHS_INPUTS: DhsInput[] = [
     prev: {
       wq: {
         do: { value: 6.8, source: "DPCC 2025 — Wazirabad station", inferred: true },
-        bod: { value: 96, source: "SPRF Mar 2026 (stable)" },
+        bod: { value: 60, source: "DPCC Oct 2025 via HT (stable)" },
         ph: { value: 7.5, source: "DPCC river pH range", inferred: true },
         waste: { value: 30, source: "Foam episodes documented" },
       },
     },
   },
   {
-    // Shahdara — 10.9% of the drain load
-    drainId: 3,
+    // Shahdara — 16.12% of the 22-drain discharge (DPCC 2025)
+    drainId: 2,
     wq: {
       do: { value: 0, source: "DPCC May 2026 — Asgarpur exit station (downstream of outfall)", inferred: true },
-      bod: { value: 130, source: "SPRF Mar 2026 — 100–159 mg/l range (mid-point)" },
+      bod: { value: 145, source: "Sahibabad outfall (UP, into Shahdara) — most polluted monitored: BOD 145 mg/L, DPCC Oct 2025 via HT" },
       ph: { value: 7.5, source: "DPCC river pH range 2025–26", inferred: true },
       waste: { value: 30, source: "Foam visible at Okhla confluence — media Nov 2025" },
     },
@@ -265,10 +268,10 @@ export const DHS_INPUTS: DhsInput[] = [
       state: "same",
       note: "BOD stable 2020 → 2024 (Delhi Dept of Environment annual averages)",
     },
-    load: { share: 10.9, note: "10.9% of 22-drain load (SPRF Mar 2026); 45% of flow arrives from UP" },
+    load: { note: "16.12% of 22-drain discharge (DPCC 2025); with Najafgarh ≈ 84% of drain pollution (TNIE, Jul 2025)" },
     confidence: {
-      officialSources: 3, // SPRF · DPCC · CPCB
-      volunteerVerified: true, // team visual checks during YIS 2026 field research
+      officialSources: 3, // DPCC · DJB · TNIE
+      volunteerVerified: true, // team field checks
       liveSensor: false,
       droneImagery: false,
       note: "3 independent official reports + field verification. No live sensor on this drain.",

@@ -1,49 +1,299 @@
 // ---------------------------------------------------------------------------
 // RIVER ON RECORD — DATA LAYER
-// Every number here comes from PUBLIC, government-backed sources only:
-// DPCC monthly reports (May 2026), CPCB, DJB, NGT orders, CSE/Tribune, TERI.
-// Source is attached to every row so each rating can be audited.
+// Compiled from official public records — see
+// "Yamuna 22 km Drain Public Records" (compiled Aug 2026):
+// DPCC monthly drain analysis reports (Jun–Jul 2026), DPCC/DoE "Progress in
+// Rejuvenation of River Yamuna" (Apr 2025), DJB discharge assessments
+// (May 2026), NMCG progress reports (Jul 2025), HT/ANI/ET/The Hindu citing
+// official data. Every figure carries its source. No number is invented.
 // ---------------------------------------------------------------------------
+
+export type TapStatus = "Tapped" | "Partially tapped" | "Work in progress" | "To be tapped";
+
+// UI colors for tapping status (shared by Scoreboard + DrainMap)
+export const STATUS_COLORS: Record<TapStatus, string> = {
+  Tapped: "#2fbf8f",
+  "Partially tapped": "#f0b429",
+  "Work in progress": "#f97316",
+  "To be tapped": "#f05252",
+};
 
 export type Drain = {
   id: number;
   name: string;
-  share: number | null; // % of the 22-drain wastewater load
-  discharge: string | null; // last public discharge figure
-  bod: string | null; // last public BOD reading at discharge
-  worst: string | null; // worst publicly reported parameter
+  bank: "West" | "East";
+  status: TapStatus; // interception/tapping status, DPCC Apr 2025
+  dischargePct: number | null; // share of 22-drain discharge, DPCC 2025
+  bodPct: number | null; // share of BOD load, DPCC 2025
+  passedStandards?: boolean; // only drain meeting all standards, DPCC Oct 2025
+  noFlow?: boolean; // recorded NO FLOW in recent DPCC sampling (tapped)
   note: string;
   source: string;
   pos: number; // 0 = Wazirabad (top) .. 1 = Okhla (bottom), stylised map
 };
 
+// Official 22-drain roster (DPCC Apr 2025 progress report + DPCC Jul 2026
+// sampling, Report No. DPCC/W/D/2026/223–244//3039). 10 tapped, 2 partially
+// tapped, 6 work in progress, 4 to be tapped.
 export const DRAINS: Drain[] = [
-  { id: 1, name: "Najafgarh", share: 68.71, discharge: "~632 MGD (revised ~862)", bod: "96 mg/l (discharge)", worst: "BOD 96 mg/l — ~10x the drain standard of 10", note: "126 sub-drains feed it. Meets the Yamuna just below Wazirabad. Category D wetland. Fish-kill incident 2022.", source: "SPRF Mar 2026; DJB reassessment May 2026", pos: 0.03 },
-  { id: 2, name: "Supplementary Drain", share: null, discharge: null, bod: null, worst: null, note: "Runs parallel to Najafgarh; part of the same basin system.", source: "DPCC monthly report", pos: 0.05 },
-  { id: 3, name: "Shahdara", share: 10.9, discharge: null, bod: "100–159 mg/l (some days)", worst: "COD 52 mg/l at confluence — worst point in the Delhi stretch", note: "45% of flow arrives from UP (Sahibabad, Loni). Joins below Okhla, near Noida. Built after the 1961 floods.", source: "SPRF Mar 2026; DPCC Aug report", pos: 1.0 },
-  { id: 4, name: "Drain No. 14 (Khyber Pass)", share: null, discharge: null, bod: null, worst: null, note: "Major northern drain; monitored by DJB under the interceptor project.", source: "DPCC monthly report", pos: 0.08 },
-  { id: 5, name: "Mori Gate", share: null, discharge: null, bod: null, worst: null, note: "Old city drain discharging into the Yamuna Bazaar stretch.", source: "DPCC monthly report", pos: 0.12 },
-  { id: 6, name: "Yamuna Bazaar", share: null, discharge: null, bod: null, worst: null, note: "Central Delhi outfall near ISBT; dense urban catchment.", source: "DPCC monthly report", pos: 0.15 },
-  { id: 7, name: "Delhi Gate", share: null, discharge: null, bod: null, worst: null, note: "One of the drains with DJB online monitoring already live.", source: "DJB online monitoring list", pos: 0.18 },
-  { id: 8, name: "Sen Nursing Home", share: null, discharge: null, bod: null, worst: null, note: "DJB real-time monitoring live on this drain.", source: "DJB online monitoring list", pos: 0.22 },
-  { id: 9, name: "Sweeper Colony", share: null, discharge: null, bod: null, worst: null, note: "Residential outfall, central stretch.", source: "DPCC monthly report", pos: 0.26 },
-  { id: 10, name: "Kudesia Ghat", share: null, discharge: null, bod: null, worst: null, note: "Ghat-side drain north of the old city.", source: "DPCC monthly report", pos: 0.3 },
-  { id: 11, name: "Civil Lines", share: null, discharge: null, bod: null, worst: null, note: "Northern outfall near the Wazirabad barrage zone.", source: "DPCC monthly report", pos: 0.1 },
-  { id: 12, name: "Kushak (Moti Bagh)", share: null, discharge: null, bod: null, worst: null, note: "South-west Delhi drain; part of the interceptor network.", source: "DPCC monthly report", pos: 0.38 },
-  { id: 13, name: "Barapullah", share: null, discharge: null, bod: null, worst: null, note: "Large southern drain running under the Barapullah flyover.", source: "DPCC monthly report", pos: 0.44 },
-  { id: 14, name: "Maharani Bagh", share: null, discharge: null, bod: null, worst: null, note: "South Delhi outfall near the Ring Road corridor.", source: "DPCC monthly report", pos: 0.5 },
-  { id: 15, name: "Taimoor Nagar", share: null, discharge: null, bod: null, worst: null, note: "Residential-industrial outfall, south stretch.", source: "DPCC monthly report", pos: 0.56 },
-  { id: 16, name: "Nizamuddin", share: null, discharge: null, bod: null, worst: null, note: "Opposite Nizamuddin bridge — DO reads 0 at the adjacent monitoring point.", source: "DPCC May 2026", pos: 0.62 },
-  { id: 17, name: "Sarai Kale Khan", share: null, discharge: null, bod: null, worst: null, note: "Drain at the Sarai Kale Khan interchange.", source: "DPCC monthly report", pos: 0.68 },
-  { id: 18, name: "Okhla", share: null, discharge: null, bod: null, worst: null, note: "Feeds the Okhla barrage zone; the foam is most visible here.", source: "DPCC May 2026", pos: 0.78 },
-  { id: 19, name: "Tehkhand", share: null, discharge: null, bod: null, worst: null, note: "South-east outfall near the Okhla industrial belt.", source: "DPCC monthly report", pos: 0.84 },
-  { id: 20, name: "Tuglakabad", share: null, discharge: null, bod: null, worst: null, note: "Industrial-area drain in the south-east.", source: "DPCC monthly report", pos: 0.88 },
-  { id: 21, name: "Kalindi Kunj", share: null, discharge: null, bod: null, worst: null, note: "The ghat where devotees stand in foam every Chhath Puja.", source: "DPCC monthly report", pos: 0.92 },
-  { id: 22, name: "Jaitpur", share: null, discharge: null, bod: null, worst: null, note: "Southern-most drain; DJB online monitoring live here too.", source: "DJB online monitoring list", pos: 0.96 },
+  {
+    id: 1,
+    name: "Najafgarh Drain (ex-Sahibi River)",
+    bank: "West",
+    status: "Work in progress",
+    dischargePct: 69.77,
+    bodPct: 59.93,
+    note: "Largest single source. Once the rain-fed Sahibi River (~51 km as a drain from Dhansa); 126 small and large drains feed its system. Discharge ~862 MGD — more than all 37 STPs combined (814.23 MGD). Joins near Sur Ghat / Signature Bridge. Oct 2025: BOD 60, TSS 140 mg/L — both above norms.",
+    source: "DPCC Apr 2025; DJB May 2026; HT 16 Dec 2025; The Hindu 15 Apr 2026",
+    pos: 0.05,
+  },
+  {
+    id: 2,
+    name: "Shahdara Drain",
+    bank: "East",
+    status: "Work in progress",
+    dischargePct: 16.12,
+    bodPct: 27.48,
+    note: "Second-largest pollution source. Receives three UP outfalls — Banthala, Indrapuri and Sahibabad. Sahibabad was the most polluted drain monitored (BOD 145, COD 416, TSS 200 mg/L, Oct 2025). Joins below Okhla Barrage near Noida.",
+    source: "DPCC Apr 2025; DPCC Oct 2025 via HT; TNIE Jul 2025",
+    pos: 0.97,
+  },
+  {
+    id: 3,
+    name: "Barapulla Drain",
+    bank: "West",
+    status: "Work in progress",
+    dischargePct: 4.92,
+    bodPct: 3.5,
+    note: "Third-largest by flow (4.92% discharge, 3.50% BOD load, DPCC 2025). Runs under the Barapullah flyover corridor in south Delhi.",
+    source: "DPCC Apr 2025",
+    pos: 0.52,
+  },
+  {
+    id: 4,
+    name: "Power House / Delhi Gate Drain",
+    bank: "West",
+    status: "Partially tapped",
+    dischargePct: 4.16,
+    bodPct: 3.52,
+    note: "4.16% discharge, 3.52% BOD load (DPCC 2025). Partially tapped as of Apr 2025.",
+    source: "DPCC Apr 2025",
+    pos: 0.38,
+  },
+  {
+    id: 5,
+    name: "ISBT Drain (Qudsia Bagh / Mori Gate)",
+    bank: "West",
+    status: "Work in progress",
+    dischargePct: 1.47,
+    bodPct: 1.57,
+    note: "Old-city drain at Qudsia Bagh / Mori Gate. 1.47% discharge, 1.57% BOD load (DPCC 2025).",
+    source: "DPCC Apr 2025",
+    pos: 0.3,
+  },
+  {
+    id: 6,
+    name: "Sen Nursing Home Drain",
+    bank: "West",
+    status: "Partially tapped",
+    dischargePct: 1.47,
+    bodPct: 1.38,
+    note: "1.47% discharge, 1.38% BOD load (DPCC 2025). Partially tapped as of Apr 2025.",
+    source: "DPCC Apr 2025",
+    pos: 0.42,
+  },
+  {
+    id: 7,
+    name: "Maharani Bagh Drain",
+    bank: "West",
+    status: "Work in progress",
+    dischargePct: 1.03,
+    bodPct: 1.24,
+    note: "South Delhi outfall near the Ring Road corridor. 1.03% discharge, 1.24% BOD load (DPCC 2025).",
+    source: "DPCC Apr 2025",
+    pos: 0.55,
+  },
+  {
+    id: 8,
+    name: "Kailash Nagar Drain",
+    bank: "East",
+    status: "To be tapped",
+    dischargePct: 0.46,
+    bodPct: 0.35,
+    note: "0.46% discharge, 0.35% BOD load (DPCC 2025). Interception not yet started.",
+    source: "DPCC Apr 2025",
+    pos: 0.58,
+  },
+  {
+    id: 9,
+    name: "Abul Fazal Drain",
+    bank: "East",
+    status: "To be tapped",
+    dischargePct: 0.24,
+    bodPct: 0.49,
+    note: "0.24% discharge, 0.49% BOD load (DPCC 2025). Interception not yet started.",
+    source: "DPCC Apr 2025",
+    pos: 0.62,
+  },
+  {
+    id: 10,
+    name: "Sonia Vihar Drain",
+    bank: "East",
+    status: "Work in progress",
+    dischargePct: 0.23,
+    bodPct: 0.23,
+    note: "North-east Delhi outfall. 0.23% discharge, 0.23% BOD load (DPCC 2025).",
+    source: "DPCC Apr 2025",
+    pos: 0.18,
+  },
+  {
+    id: 11,
+    name: "Jaitpur Drain",
+    bank: "East",
+    status: "To be tapped",
+    dischargePct: 0.19,
+    bodPct: 0.17,
+    note: "Southern-most east-bank outfall. 0.19% discharge, 0.17% BOD load (DPCC 2025).",
+    source: "DPCC Apr 2025",
+    pos: 0.88,
+  },
+  {
+    id: 12,
+    name: "Shastri Park Drain",
+    bank: "East",
+    status: "To be tapped",
+    dischargePct: 0.18,
+    bodPct: 0.13,
+    passedStandards: true,
+    note: "0.18% discharge, 0.13% BOD load (DPCC 2025). The ONLY drain meeting all water-quality standards in the DPCC Oct 2025 round (BOD ≤30, COD ≤250, TSS ≤100, pH 5.5–9).",
+    source: "DPCC Apr 2025; DPCC Oct 2025 via HT",
+    pos: 0.45,
+  },
+  {
+    id: 13,
+    name: "Metcalf House Drain",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.12,
+  },
+  {
+    id: 14,
+    name: "Khyber Pass Drain",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.16,
+  },
+  {
+    id: 15,
+    name: "Sweeper Colony Drain",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.45,
+  },
+  {
+    id: 16,
+    name: "Magazine Road Drain",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.28,
+  },
+  {
+    id: 17,
+    name: "Tonga Stand Drain",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.32,
+  },
+  {
+    id: 18,
+    name: "Moat Drain (Vijay Ghat)",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.22,
+  },
+  {
+    id: 19,
+    name: "Drain No. 14",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.1,
+  },
+  {
+    id: 20,
+    name: "Tehkhand Drain",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling. South-east industrial belt.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.8,
+  },
+  {
+    id: 21,
+    name: "Civil Mill Drain",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.33,
+  },
+  {
+    id: 22,
+    name: "Tuglakabad Drain (Kalkaji merged)",
+    bank: "West",
+    status: "Tapped",
+    dischargePct: null,
+    bodPct: null,
+    noFlow: true,
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling. Kalkaji Drain merged into it.",
+    source: "DPCC Apr 2025; DPCC 2026 sampling",
+    pos: 0.9,
+  },
 ];
 
 // ---------------------------------------------------------------------------
 // WATER QUALITY — DO & FAECAL COLIFORM (May 2026, DPCC via India Today)
+// River-station readings along the 22 km stretch.
 // ---------------------------------------------------------------------------
 export type QualityPoint = {
   site: string;
@@ -73,31 +323,32 @@ export const BOD_TREND = [
   { site: "Asgarpur", y2017: 30.0, y2020: 30.8, y2024: 29.0 },
 ];
 
-// Drain load split
+// Discharge share of the 22 drains — DPCC 2025 (official roster)
 export const LOAD_SPLIT = [
-  { name: "Najafgarh", value: 68.71 },
-  { name: "Shahdara", value: 10.9 },
-  { name: "Other 20 drains", value: 20.39 },
+  { name: "Najafgarh", value: 69.77 },
+  { name: "Shahdara", value: 16.12 },
+  { name: "Other 20 drains", value: 14.11 },
 ];
 
 // ---------------------------------------------------------------------------
-// HEADLINE FACTS (public data)
+// HEADLINE FACTS (public records, compiled Aug 2026)
 // ---------------------------------------------------------------------------
 export const FACTS = [
-  { value: "22", unit: "km", label: "from alive (Palla) to biologically dead (Okhla)" },
-  { value: "76–80%", unit: "", label: "of the entire Yamuna's pollution lands in this stretch — under 2% of its length" },
-  { value: "330,000", unit: "MPN/100ml", label: "faecal coliform at Asgarpur — 132x the legal maximum of 2,500" },
-  { value: "174–200", unit: "MGD", label: "of untreated sewage enters the drains every single day" },
-  { value: "Rs 8,000+", unit: "crore", label: "spent across Yamuna Action Plans I–III and Namami Gange — and the river still dies in 22 km" },
+  { value: "22", unit: "km", label: "from alive (Palla) to biologically dead (Okhla) — barely 2% of the river, >80% of its pollution" },
+  { value: "1,324.4", unit: "MGD", label: "drain flow, May 2026 — DJB revised it UP 76% from 750.4 MGD" },
+  { value: "26/27", unit: "", label: "drains failed water-quality standards in the Oct 2025 DPCC round — only Shastri Park passed" },
+  { value: "~862", unit: "MGD", label: "Najafgarh drain alone — more than all 37 STPs combined (814.23 MGD)" },
+  { value: "87%", unit: "", label: "of the BOD load comes from two drains — Najafgarh 59.93% + Shahdara 27.48%" },
 ];
 
 export const TICKER_ITEMS = [
   "DO 0 at ISBT · ITO · Nizamuddin · Okhla (May 2026, DPCC)",
-  "Najafgarh + Shahdara = ~80% of the drain load",
-  "41 government real-time monitors installed — reports read by almost nobody",
+  "Najafgarh + Shahdara ≈ 84% of drain pollution (TNIE, Jul 2025)",
+  "Drain flow revised UP 76% — 750.4 → 1,324.4 MGD (DJB, May 2026)",
+  "July 2026 round: every flowing drain exceeded the BOD 30 mg/L norm (range 64–280)",
+  "10 of 22 drains now tapped — recorded NO FLOW in DPCC sampling",
+  "ISP deadline Dec 2026 — 26 sub-drains still untrapped (est. 30–40 MGD)",
   "No legal limit for surfactants in Indian rivers (TERI, Dec 2025)",
-  "9 of 37 STPs failed CPCB standards in April 2026",
-  "Home Minister demanded third-party verification (Jul 2025)",
 ];
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
+import RiverStrip from "@/components/RiverStrip";
 import Scoreboard from "@/components/Scoreboard";
 import DrainMap from "@/components/DrainMap";
 import DataCharts from "@/components/DataCharts";
@@ -15,12 +16,13 @@ export default function Home() {
       <Nav />
       <main>
         <Hero />
+        <RiverStrip />
         <Scoreboard />
         <DrainMap />
-        <DataCharts />
-        <Forecast />
         <People />
+        <Forecast />
         <Verify />
+        <DataCharts />
         <CTA />
       </main>
       <Footer />

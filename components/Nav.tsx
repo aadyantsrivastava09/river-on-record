@@ -1,18 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, useScroll, useSpring } from "framer-motion";
 
 const LINKS = [
   { href: "#scoreboard", label: "Scoreboard" },
   { href: "#map", label: "Map" },
-  { href: "#data", label: "Data" },
-  { href: "#forecast", label: "Forecast" },
   { href: "#people", label: "People" },
+  { href: "#forecast", label: "Forecast" },
   { href: "#verify", label: "Verify" },
+  { href: "#data", label: "Data" },
 ];
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
+
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 24, restDelta: 0.001 });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -29,6 +33,11 @@ export default function Nav() {
           : "bg-transparent border-b border-transparent"
       }`}
     >
+      {/* scroll progress */}
+      <motion.div
+        style={{ scaleX }}
+        className="absolute inset-x-0 top-0 h-0.5 origin-left bg-alive"
+      />
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href="#top" className="flex items-center gap-3 group">
           <span className="relative flex h-2.5 w-2.5">
