@@ -18,7 +18,12 @@ export default function Footer() {
         </div>
 
         {/* Powered by Vantalyne Labs */}
-        <div className="flex items-center gap-3">
+        <a
+          href="https://vantalynelabs.in"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-3"
+        >
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-vl-cream">
             <Image
               src="/vantalyne-navy.png"
@@ -28,13 +33,15 @@ export default function Footer() {
               className="h-5 w-auto"
             />
           </span>
-          <div>
-            <p className="font-display text-xs font-bold text-snow">Powered by Vantalyne Labs</p>
+          <span>
+            <p className="font-display text-xs font-bold text-snow transition-colors group-hover:text-alive">
+              Powered by Vantalyne Labs<span className="text-alive"> ↗</span>
+            </p>
             <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-fog/70">
               A youth-led ecosystem of builders
             </p>
-          </div>
-        </div>
+          </span>
+        </a>
 
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-fog/70">
           Every number traced · every bulletin hashed

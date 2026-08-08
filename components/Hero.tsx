@@ -243,7 +243,12 @@ export default function Hero() {
             />
 
             {/* Vantalyne Labs branding */}
-            <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-line bg-panel px-4 py-1.5 animate-rise">
+            <a
+              href="https://vantalynelabs.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-line bg-panel px-4 py-1.5 animate-rise transition-colors hover:border-alive/50"
+            >
               <span className="grid h-6 w-6 place-items-center rounded-md bg-vl-cream">
                 <Image
                   src="/vantalyne-navy.png"
@@ -254,9 +259,9 @@ export default function Hero() {
                 />
               </span>
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-fog">
-                A Vantalyne Labs venture
+                A Vantalyne Labs venture<span className="text-alive"> ↗</span>
               </span>
-            </div>
+            </a>
 
             <p className="label mb-5 animate-rise">
               Built entirely on public government data
@@ -349,9 +354,14 @@ export default function Hero() {
             />
           </span>
           <div>
-            <p className="font-display text-sm font-bold tracking-wide text-snow">
-              What is Vantalyne Labs?
-            </p>
+            <a
+              href="https://vantalynelabs.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-display text-sm font-bold tracking-wide text-snow transition-colors hover:text-alive"
+            >
+              What is Vantalyne Labs? <span className="text-alive">↗</span>
+            </a>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-mist">
               Vantalyne Labs is a youth-led ecosystem of builders. It never takes equity from
               founder-brought ventures, and support never costs ownership — once something is built
