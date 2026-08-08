@@ -5,8 +5,14 @@ export default function Footer() {
     <footer className="border-t border-line bg-ink py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 sm:flex-row">
         <div>
-          <p className="font-display text-sm font-bold text-snow">River on Record</p>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-fog/70">
+          <Image
+            src="/logo-round.png"
+            alt="River on Record"
+            width={993}
+            height={1006}
+            className="h-12 w-auto"
+          />
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog/70">
             The public drain scoreboard for the Yamuna
           </p>
         </div>

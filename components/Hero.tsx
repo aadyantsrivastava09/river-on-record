@@ -232,6 +232,16 @@ export default function Hero() {
       <div className="relative mx-auto max-w-6xl px-6">
         <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
+            {/* River on Record banner logo */}
+            <Image
+              src="/logo-banner.png"
+              alt="River on Record"
+              width={1122}
+              height={255}
+              priority
+              className="mb-6 h-12 w-auto animate-rise sm:h-14"
+            />
+
             {/* Vantalyne Labs branding */}
             <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-line bg-panel px-4 py-1.5 animate-rise">
               <span className="grid h-6 w-6 place-items-center rounded-md bg-vl-cream">

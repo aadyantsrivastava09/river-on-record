@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { motion, useScroll, useSpring } from "framer-motion";
 
 const LINKS = [
@@ -45,7 +46,14 @@ export default function Nav() {
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-dead" />
           </span>
           <span className="font-display text-sm font-bold tracking-[0.18em] text-snow uppercase">
-            River<span className="text-dead"> on </span>Record
+            <Image
+              src="/logo-banner.png"
+              alt="River on Record"
+              width={1122}
+              height={255}
+              priority
+              className="h-8 w-auto"
+            />
           </span>
         </a>
 

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   description:
     "Every drain that kills the Yamuna, rated and published weekly. Built entirely on public government data — DPCC, CPCB, DJB and NGT records, 27 monitoring locations. No hardware. No excuses.",
   keywords: ["Yamuna", "River on Record", "pollution", "drains", "Delhi", "citizen data"],
-  icons: { icon: "/vantalyne-navy.png" },
+  icons: { icon: "/logo-round.png" },
 };
 
 export default function RootLayout({
