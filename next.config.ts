@@ -3,8 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // static export for GitHub Pages — see node_modules/next/dist/docs/01-app/02-guides/static-exports.md
   output: "export",
-  // project site lives at /river-on-record/ — prefix all assets and links
-  basePath: "/river-on-record",
+  // served at the root of riveronrecord.vantalynelabs.in via public/CNAME
   images: { unoptimized: true },
 };
 

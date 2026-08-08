@@ -236,7 +236,7 @@ export default function Hero() {
             <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-line bg-panel px-4 py-1.5 animate-rise">
               <span className="grid h-6 w-6 place-items-center rounded-md bg-vl-cream">
                 <Image
-                  src="/river-on-record/vantalyne-navy.png"
+                  src="/vantalyne-navy.png"
                   alt="Vantalyne Labs"
                   width={291}
                   height={272}
@@ -331,7 +331,7 @@ export default function Hero() {
         <div className="mt-12 flex flex-col items-start gap-5 rounded-2xl border border-line bg-panel p-6 sm:flex-row sm:items-center sm:p-8">
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-vl-cream">
             <Image
-              src="/river-on-record/vantalyne-navy.png"
+              src="/vantalyne-navy.png"
               alt="Vantalyne Labs"
               width={291}
               height={272}

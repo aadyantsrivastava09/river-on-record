@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-vl-cream">
             <Image
-              src="/river-on-record/vantalyne-navy.png"
+              src="/vantalyne-navy.png"
               alt="Vantalyne Labs"
               width={291}
               height={272}
