@@ -9,7 +9,6 @@ const LINKS = [
   { href: "#map", label: "Map" },
   { href: "#people", label: "People" },
   { href: "#forecast", label: "Forecast" },
-  { href: "#verify", label: "Verify" },
   { href: "#data", label: "Data" },
 ];
 

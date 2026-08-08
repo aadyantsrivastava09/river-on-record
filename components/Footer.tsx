@@ -44,7 +44,7 @@ export default function Footer() {
         </a>
 
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-fog/70">
-          Every number traced · every bulletin hashed
+          Every number traced · every figure sourced
         </p>
       </div>
     </footer>

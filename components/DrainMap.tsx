@@ -190,6 +190,10 @@ export default function DrainMap() {
                 >
                   DHS {rating.total} · {rating.risk.name} risk
                 </span>
+              ) : selected.noFlow ? (
+                <span className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-fog">
+                  DHS: no flow — tapped
+                </span>
               ) : (
                 <span className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber">
                   DHS: awaiting public data

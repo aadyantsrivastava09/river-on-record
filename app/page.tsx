@@ -6,7 +6,6 @@ import DrainMap from "@/components/DrainMap";
 import DataCharts from "@/components/DataCharts";
 import Forecast from "@/components/Forecast";
 import People from "@/components/People";
-import Verify from "@/components/Verify";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 
@@ -21,7 +20,6 @@ export default function Home() {
         <DrainMap />
         <People />
         <Forecast />
-        <Verify />
         <DataCharts />
         <CTA />
       </main>

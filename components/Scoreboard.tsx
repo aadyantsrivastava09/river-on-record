@@ -100,7 +100,7 @@ export default function Scoreboard() {
           <p className="max-w-md text-sm leading-relaxed text-fog">
             Every drain that feeds the 22-km stretch, scored and republished weekly.
             One question, one number:{" "}
-            <span className="text-snow">how healthy is this drain today?</span>
+            <span className="text-snow">how healthy is this drain in the latest DPCC round?</span>
           </p>
         </div>
 
@@ -111,7 +111,7 @@ export default function Scoreboard() {
               The score, in one line
             </p>
             <span className="rounded-full border border-alive/40 bg-alive/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-alive">
-              Live · 0–100 · 100 = healthy drain
+              Score · 0–100 · 100 = healthy drain
             </span>
           </div>
 
@@ -204,7 +204,7 @@ export default function Scoreboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">
-              {DHS_INPUTS.length} of {DRAINS.length} drains rated
+              {DHS_INPUTS.length} of {DRAINS.length} drains rated · data as of Jul 2026
             </span>
             <input
               value={query}
@@ -253,7 +253,7 @@ export default function Scoreboard() {
         </div>
 
         <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-fog/70">
-          Sources: DPCC monthly drain reports · DJB · CPCB · NGT orders · HT/ANI/The Hindu citing official data
+          Sources: DPCC monthly drain reports · DJB · CPCB · NGT orders · HT/ANI/The Hindu citing official data · as of Jul 2026
         </p>
       </div>
       </Reveal>
@@ -306,6 +306,11 @@ function FragmentRow({
         <td className="px-4 py-3.5">
           {dhs ? (
             <ScoreChip total={dhs.total} risk={dhs.risk} />
+          ) : d.noFlow ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-panel2 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-fog">
+              <span className="h-1.5 w-1.5 rounded-full bg-fog" />
+              no flow · tapped
+            </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-panel2 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-fog">
               <span className="h-1.5 w-1.5 rounded-full bg-amber animate-pulse-dot" />

@@ -242,10 +242,10 @@ export const DHS_INPUTS: DhsInput[] = [
     load: { note: "69.77% of 22-drain discharge ≈ ~862 MGD (DJB May 2026) — more than all 37 STPs combined (814.23 MGD)" },
     confidence: {
       officialSources: 4, // DPCC · DJB · HT · NGT
-      volunteerVerified: true, // team field checks
+      volunteerVerified: false, // field checks not confirmed — set true only if verified on the ground
       liveSensor: false, // no DJB real-time monitor on this drain yet
       droneImagery: false, // no-drone project by design
-      note: "4 independent official reports + field verification. No live sensor on this drain.",
+      note: "4 independent public reports. No live sensor on this drain.",
     },
     prev: {
       wq: {
@@ -273,10 +273,10 @@ export const DHS_INPUTS: DhsInput[] = [
     load: { note: "16.12% of 22-drain discharge (DPCC 2025); with Najafgarh ≈ 84% of drain pollution (TNIE, Jul 2025)" },
     confidence: {
       officialSources: 3, // DPCC · DJB · TNIE
-      volunteerVerified: true, // team field checks
+      volunteerVerified: false, // field checks not confirmed — set true only if verified on the ground
       liveSensor: false,
       droneImagery: false,
-      note: "3 independent official reports + field verification. No live sensor on this drain.",
+      note: "3 independent public reports. No live sensor on this drain.",
     },
   },
 ];

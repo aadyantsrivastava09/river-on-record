@@ -141,7 +141,7 @@ export default function DataCharts() {
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-fog">
           Every chart below is drawn from published government data — DPCC monthly reports
-          (May 2026), Delhi Department of Environment annual averages, DJB and CPCB. We
+          (May 2026), Delhi DoE annual averages (2017–2024), DJB and CPCB. We
           added nothing; we simply refused to let it stay unread.
         </p>
 
@@ -161,7 +161,7 @@ export default function DataCharts() {
           <div className="card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-bold text-snow">Raw sewage, measured</h3>
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">FC · log scale</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">FC · May 2026 · DPCC · log scale</span>
             </div>
             <Chart option={fcOption} className="h-72 w-full" />
             <p className="mt-3 text-xs leading-relaxed text-fog">
@@ -173,7 +173,7 @@ export default function DataCharts() {
           <div className="card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-bold text-snow">Ten years, hundreds of crores</h3>
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">BOD annual averages</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">BOD · DoE annual averages · 2017–2024</span>
             </div>
             <Chart option={bodOption} className="h-72 w-full" />
             <p className="mt-3 text-xs leading-relaxed text-fog">
@@ -185,7 +185,7 @@ export default function DataCharts() {
           <div className="card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-bold text-snow">Two drains. Eighty percent.</h3>
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">Load share</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">Load share · DPCC 2025</span>
             </div>
             <Chart option={loadOption} className="h-72 w-full" />
             <p className="mt-3 text-xs leading-relaxed text-fog">

@@ -26,7 +26,7 @@ export type Drain = {
   dischargePct: number | null; // share of 22-drain discharge, DPCC 2025
   bodPct: number | null; // share of BOD load, DPCC 2025
   passedStandards?: boolean; // only drain meeting all standards, DPCC Oct 2025
-  noFlow?: boolean; // recorded NO FLOW in recent DPCC sampling (tapped)
+  noFlow?: boolean; // recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026) (tapped)
   note: string;
   source: string;
   pos: number; // 0 = Wazirabad (top) .. 1 = Okhla (bottom), stylised map
@@ -177,7 +177,7 @@ export const DRAINS: Drain[] = [
     dischargePct: null,
     bodPct: null,
     noFlow: true,
-    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026).",
     source: "DPCC Apr 2025; DPCC 2026 sampling",
     pos: 0.12,
   },
@@ -189,7 +189,7 @@ export const DRAINS: Drain[] = [
     dischargePct: null,
     bodPct: null,
     noFlow: true,
-    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026).",
     source: "DPCC Apr 2025; DPCC 2026 sampling",
     pos: 0.16,
   },
@@ -201,7 +201,7 @@ export const DRAINS: Drain[] = [
     dischargePct: null,
     bodPct: null,
     noFlow: true,
-    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026).",
     source: "DPCC Apr 2025; DPCC 2026 sampling",
     pos: 0.45,
   },
@@ -213,7 +213,7 @@ export const DRAINS: Drain[] = [
     dischargePct: null,
     bodPct: null,
     noFlow: true,
-    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026).",
     source: "DPCC Apr 2025; DPCC 2026 sampling",
     pos: 0.28,
   },
@@ -225,7 +225,7 @@ export const DRAINS: Drain[] = [
     dischargePct: null,
     bodPct: null,
     noFlow: true,
-    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026).",
     source: "DPCC Apr 2025; DPCC 2026 sampling",
     pos: 0.32,
   },
@@ -237,7 +237,7 @@ export const DRAINS: Drain[] = [
     dischargePct: null,
     bodPct: null,
     noFlow: true,
-    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026).",
     source: "DPCC Apr 2025; DPCC 2026 sampling",
     pos: 0.22,
   },
@@ -261,7 +261,7 @@ export const DRAINS: Drain[] = [
     dischargePct: null,
     bodPct: null,
     noFlow: true,
-    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling. South-east industrial belt.",
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026). South-east industrial belt.",
     source: "DPCC Apr 2025; DPCC 2026 sampling",
     pos: 0.8,
   },
@@ -273,7 +273,7 @@ export const DRAINS: Drain[] = [
     dischargePct: null,
     bodPct: null,
     noFlow: true,
-    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling.",
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026).",
     source: "DPCC Apr 2025; DPCC 2026 sampling",
     pos: 0.33,
   },
@@ -285,7 +285,7 @@ export const DRAINS: Drain[] = [
     dischargePct: null,
     bodPct: null,
     noFlow: true,
-    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in recent DPCC sampling. Kalkaji Drain merged into it.",
+    note: "Tapped — negligible remaining outfall share; recorded NO FLOW in DPCC Jul 2026 sampling (06.07.2026). Kalkaji Drain merged into it.",
     source: "DPCC Apr 2025; DPCC 2026 sampling",
     pos: 0.9,
   },
@@ -337,8 +337,8 @@ export const FACTS = [
   { value: "22", unit: "km", label: "from alive (Palla) to biologically dead (Okhla) — barely 2% of the river, >80% of its pollution" },
   { value: "1,324.4", unit: "MGD", label: "drain flow, May 2026 — DJB revised it UP 76% from 750.4 MGD" },
   { value: "26/27", unit: "", label: "drains failed water-quality standards in the Oct 2025 DPCC round — only Shastri Park passed" },
-  { value: "~862", unit: "MGD", label: "Najafgarh drain alone — more than all 37 STPs combined (814.23 MGD)" },
-  { value: "87%", unit: "", label: "of the BOD load comes from two drains — Najafgarh 59.93% + Shahdara 27.48%" },
+  { value: "~862", unit: "MGD", label: "Najafgarh drain alone — more than all 37 STPs combined (814.23 MGD, DJB May 2026)" },
+  { value: "87%", unit: "", label: "of the BOD load comes from two drains — Najafgarh 59.93% + Shahdara 27.48% (DPCC, Apr 2025)" },
 ];
 
 export const TICKER_ITEMS = [
@@ -347,7 +347,7 @@ export const TICKER_ITEMS = [
   "Drain flow revised UP 76% — 750.4 → 1,324.4 MGD (DJB, May 2026)",
   "July 2026 round (06.07.2026): every flowing drain exceeded the BOD 30 mg/L norm — range 32–130, worst Barapulla",
   "Shastri Park — the only Oct 2025 pass — missed the norm again in Jul 2026 (BOD 95)",
-  "10 of 22 drains tapped — NO FLOW in DPCC sampling (8 still no-flow in Jul 2026)",
+  "10 of 22 drains tapped — 9 recorded NO FLOW in the Jul 2026 round (sampled 06.07.2026)",
   "ISP deadline Dec 2026 — 26 sub-drains still untrapped (est. 30–40 MGD)",
   "No legal limit for surfactants in Indian rivers (TERI, Dec 2025)",
 ];

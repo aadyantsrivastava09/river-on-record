@@ -228,7 +228,9 @@ export default function RiverStrip() {
                 {active.noFlow && " · no flow"}
                 {rating
                   ? ` · DHS ${rating.total} · ${rating.risk.name} risk`
-                  : " · DHS: awaiting public data"}
+                  : active.noFlow
+                    ? ""
+                    : " · DHS: awaiting public data"}
               </>
             ) : (
               "Hover a drain to inspect it."
@@ -284,7 +286,7 @@ export default function RiverStrip() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] text-fog">
                   <i className="h-2 w-2 rounded-full" style={{ background: "#40505c" }} />
-                  × {tapped.length} drains · no flow (DPCC 2026)
+                  × {tapped.length} drains · no flow (DPCC Jul 2026 · 06.07.2026)
                 </span>
                 <span className="flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] text-fog">
                   pipe width ∝ discharge share

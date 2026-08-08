@@ -12,8 +12,8 @@ import { RIVER_PATH } from "@/lib/river";
 const COUNT_FACTS = [
   { label: "of river carrying >80% of the pollution — alive at Palla, dead at Okhla", to: 22, decimals: 0, unit: "km" },
   { label: "of drain flow pouring in every day (DJB, May 2026)", to: 1324.4, decimals: 1, unit: "MGD" },
-  { label: "of 27 drains failed water-quality standards — only one passed", to: 26, decimals: 0, unit: "/27" },
-  { label: "from one drain — Najafgarh, more than all 37 STPs combined", to: 862, decimals: 0, unit: "MGD", prefix: "~" },
+  { label: "of 27 drains failed water-quality standards — only one passed (Oct 2025 round)", to: 26, decimals: 0, unit: "/27" },
+  { label: "from one drain — Najafgarh, more than all 37 STPs combined (DJB, May 2026)", to: 862, decimals: 0, unit: "MGD", prefix: "~" },
   { label: "of the pollution load from just two drains — Najafgarh + Shahdara", to: 87, decimals: 0, unit: "%" },
 ];
 
