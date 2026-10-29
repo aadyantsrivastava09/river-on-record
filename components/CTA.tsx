@@ -9,13 +9,13 @@ export default function CTA() {
           The data exists. <span className="text-alive">The scoreboard makes it count.</span>
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-fog">
-          No drones. No sensors. No hardware budget. 27 DPCC monitoring locations already sample the river;
+          No drones. No sensors. No hardware budget. 29 DPCC monitoring locations already sample the river;
           the reports are public. We simply turn them into a current, verifiable scoreboard —
           and let the public do the rest.
         </p>
 
         <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
-          {["DPCC data", "CPCB reports", "DJB flow records", "NMCG (Jan 2026)", "27 DPCC monitors", "100% public"].map((c) => (
+          {["DPCC data", "CPCB reports", "DJB flow records", "NMCG (Jan 2026)", "29 DPCC monitors", "100% public"].map((c) => (
             <span key={c} className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-fog">
               {c}
             </span>

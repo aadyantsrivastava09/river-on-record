@@ -281,7 +281,7 @@ Built entirely on public government data · latest DPCC round: {LATEST_ROUND.lab
             </h1>
 
             <p className="mt-6 max-w-xl text-base leading-relaxed text-mist animate-rise">
-              Rs 8,000 crore. 30 years of plans. 27 government monitoring points.
+              Rs 8,000 crore. 30 years of plans. 29 DPCC monitoring points.
               And still, no citizen, journalist or court can get a straight answer to one
               question:{" "}
               <span className="text-snow font-semibold">

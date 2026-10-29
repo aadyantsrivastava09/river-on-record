@@ -42,7 +42,8 @@ export type Drain = {
 };
 
 // DPCC Sep 2026 roster (22 outfalls). RME/RD-180 and Drain No. 12A replace
-// Tehkhand and Tuglakabad in the current report; both are now flowing.
+// Tehkhand and Tuglakabad in the Sep 2026 DPCC table; the latter two are not
+// sampled in this round.
 // Status counts: 10 tapped, 2 partially tapped, 3 work in progress,
 // 6 to be tapped, 1 not to be tapped (NMCG Jan 2026).
 export const DRAINS: Drain[] = [

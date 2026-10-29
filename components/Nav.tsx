@@ -67,12 +67,7 @@ export default function Nav() {
           ))}
         </nav>
 
-        <a
-          href="#join"
-          className="rounded-full border border-alive/40 bg-alive/10 px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-alive transition-all hover:bg-alive/20"
-        >
-          Join the watch
-        </a>
+
       </div>
     </header>
   );
