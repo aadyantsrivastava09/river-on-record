@@ -14,19 +14,6 @@ export default function CTA() {
           and let the public do the rest.
         </p>
 
-        <div className="mx-auto mt-8 max-w-md rounded-2xl border border-dashed border-line bg-panel px-6 py-5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-alive">
-            Starting soon
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-fog">
-            The Friday bulletin — one email a week on the scoreboard — opens for signups at launch.
-          </p>
-        </div>
-
-        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-fog/70">
-          No spam. One email a week — the bulletin.
-        </p>
-
         <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
           {["DPCC data", "CPCB reports", "DJB flow records", "NMCG (Jan 2026)", "27 DPCC monitors", "100% public"].map((c) => (
             <span key={c} className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-fog">

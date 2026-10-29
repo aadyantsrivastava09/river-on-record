@@ -8,7 +8,6 @@ const LINKS = [
   { href: "#scoreboard", label: "Scoreboard" },
   { href: "#map", label: "Map" },
   { href: "#people", label: "People" },
-  { href: "#forecast", label: "Forecast" },
   { href: "#data", label: "Data" },
 ];
 
