@@ -28,7 +28,7 @@ export default function CTA() {
         </p>
 
         <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
-          {["DPCC data", "CPCB reports", "DJB flow records", "NGT orders", "27 DPCC monitors", "100% public"].map((c) => (
+          {["DPCC data", "CPCB reports", "DJB flow records", "NMCG (Jan 2026)", "27 DPCC monitors", "100% public"].map((c) => (
             <span key={c} className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-fog">
               {c}
             </span>
