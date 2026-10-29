@@ -5,10 +5,12 @@ import Image from "next/image";
 import { motion, useScroll, useSpring } from "framer-motion";
 
 const LINKS = [
-  { href: "#scoreboard", label: "Scoreboard" },
-  { href: "#map", label: "Map" },
-  { href: "#people", label: "People" },
-  { href: "#data", label: "Data" },
+  { href: "/#scoreboard", label: "Scoreboard" },
+  { href: "/#map", label: "Map" },
+  { href: "/#people", label: "People" },
+  { href: "/#history", label: "History" },
+  { href: "/#data", label: "Data" },
+  { href: "/methodology", label: "Methodology" },
 ];
 
 export default function Nav() {

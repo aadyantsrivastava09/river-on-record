@@ -49,13 +49,9 @@ export const PREV_ROUND: RoundMeta = {
   indexUrl: INDEX_URL,
 };
 
-export type DrainSample = {
-  noFlow: boolean;
-  ph: number | null;
-  tss: number | null;
-  cod: number | null;
-  bod: number | null;
-};
+export type DrainSample =
+  | { noFlow: true; ph?: null; tss?: null; cod?: null; bod?: null }
+  | { noFlow: false; ph: number | null; tss: number | null; cod: number | null; bod: number | null };
 
 export type DrainSampleSet = {
   latest: DrainSample;
