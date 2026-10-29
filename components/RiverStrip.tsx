@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DRAINS, DO_FC, STATUS_COLORS } from "@/data/drains";
 import type { Drain } from "@/data/drains";
 import { getDhs } from "@/data/dhs";
+import { LATEST_ROUND } from "@/data/water-quality";
 import Reveal from "@/components/Reveal";
 
 // The 22 km transect — horizontal cut, Wazirabad (left) → Okhla (right).
@@ -23,9 +24,14 @@ const STATION_FRACS = [0.05, 0.17, 0.36, 0.5, 0.64, 0.8, 0.95];
 
 const KM_TICKS = [0, 5, 10, 15, 22];
 
-const doColor = (doVal: number) => (doVal >= 5 ? "#2fbf8f" : doVal > 0 ? "#f0b429" : "#f05252");
+const doColor = (doVal: number | null) =>
+  doVal === null ? "#7e97a6" : doVal >= 5 ? "#2fbf8f" : doVal > 0 ? "#f0b429" : "#f05252";
 
-const shortName = (d: Drain) => d.name.split(" ")[0];
+const shortName = (d: Drain) => {
+  if (d.name.includes("RME")) return "RME";
+  if (d.name.startsWith("Drain No.")) return d.name.replace("Drain No. ", "");
+  return d.name.split(" ")[0];
+};
 
 // Pipe width ∝ share of the 22-drain discharge (DPCC 2025), sqrt-scaled so
 // small drains stay visible next to Najafgarh's 69.77%.
@@ -37,7 +43,7 @@ const TAG_HALO = { paintOrder: "stroke" as const, stroke: "#0a1218", strokeWidth
 export default function RiverStrip() {
   const [active, setActive] = useState<Drain | null>(null);
 
-  const flowing = DRAINS.filter((d) => d.dischargePct !== null);
+  const flowing = DRAINS.filter((d) => !d.noFlow);
   const westTags = flowing.filter((d) => d.bank === "West");
   const eastTags = flowing.filter((d) => d.bank === "East");
   const tapped = DRAINS.filter((d) => d.noFlow);
@@ -100,8 +106,8 @@ export default function RiverStrip() {
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-fog">
             A horizontal cut of the same stretch — flow runs left to right. Every drain is drawn to
             scale: pipe width is its share of the 22-drain discharge, pipe colour is its DHS rating
-            where public data allows (Najafgarh, Shahdara), otherwise its tapping status. Grey pipes
-            are tapped drains that recorded no flow.
+            for all 15 flowing drains, otherwise its tapping status. Grey pipes recorded no flow in
+            the latest DPCC round.
           </p>
 
           <div className="mt-10 overflow-x-auto pb-2">
@@ -109,8 +115,8 @@ export default function RiverStrip() {
               <defs>
                 <linearGradient id="stripGrad" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#2fbf8f" />
-                  <stop offset="16%" stopColor="#f0b429" />
-                  <stop offset="30%" stopColor="#f05252" />
+                  <stop offset="14%" stopColor="#f0b429" />
+                  <stop offset="90%" stopColor="#f0b429" />
                   <stop offset="100%" stopColor="#f05252" />
                 </linearGradient>
               </defs>
@@ -166,7 +172,7 @@ export default function RiverStrip() {
                 );
               })}
 
-              {/* river stations — DO May 2026 (DPCC) */}
+              {/* river stations — DO Sep 2026 (DPCC) */}
               {DO_FC.map((p, i) => {
                 const x = X0 + STATION_FRACS[i] * SPAN;
                 return (
@@ -181,7 +187,7 @@ export default function RiverStrip() {
                       textAnchor="middle"
                       style={TAG_HALO}
                     >
-                      {p.site.split(" ")[0]} · DO {p.do2026}
+                      {p.site.split(" ")[0]} · DO {p.do2026 === null ? "n/r" : p.do2026}
                     </text>
                   </g>
                 );
@@ -223,7 +229,7 @@ export default function RiverStrip() {
           <div className="mt-4 min-h-[22px] font-mono text-xs text-mist">
             {active ? (
               <>
-                #{String(active.id).padStart(2, "0")} · {active.name} · {active.bank} bank ·{" "}
+                #{String(active.dpccId).padStart(2, "0")} · {active.name} · {active.bank} bank ·{" "}
                 {active.status}
                 {active.noFlow && " · no flow"}
                 {rating
@@ -240,7 +246,7 @@ export default function RiverStrip() {
           {/* legend */}
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             <div className="card p-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">Rated drains · DHS</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">Rated drains · DHS ({rated.length} of {DRAINS.length})</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {rated.map((d) => {
                   const r = getDhs(d.id)!;
@@ -286,7 +292,7 @@ export default function RiverStrip() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] text-fog">
                   <i className="h-2 w-2 rounded-full" style={{ background: "#40505c" }} />
-                  × {tapped.length} drains · no flow (DPCC Jul 2026 · 06.07.2026)
+                  × {tapped.length} drains · no flow (DPCC Sep 2026 · {LATEST_ROUND.sampled})
                 </span>
                 <span className="flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] text-fog">
                   pipe width ∝ discharge share

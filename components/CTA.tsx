@@ -10,7 +10,7 @@ export default function CTA() {
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-fog">
           No drones. No sensors. No hardware budget. 27 DPCC monitoring locations already sample the river;
-          the reports are public. We simply turn them into a weekly, verifiable scoreboard —
+          the reports are public. We simply turn them into a current, verifiable scoreboard —
           and let the public do the rest.
         </p>
 

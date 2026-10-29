@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DRAINS, STATUS_COLORS } from "@/data/drains";
 import type { Drain } from "@/data/drains";
 import { getDhs } from "@/data/dhs";
+import { LATEST_ROUND } from "@/data/water-quality";
+import LatestSample from "@/components/LatestSample";
 import Reveal from "@/components/Reveal";
 import { RIVER_PATH } from "@/lib/river";
 
@@ -35,8 +37,8 @@ export default function DrainMap() {
           The 22-kilometre crime scene
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-fog">
-          From Wazirabad barrage (top — the river is alive) to Okhla barrage (bottom —
-          biologically dead). 22 drains pour in between. Click any marker.
+          From Wazirabad barrage (top — the river is oxygen-stressed) to Asgarpur
+          (bottom — nil dissolved oxygen). 22 DPCC outfalls pour in between. Click any marker.
         </p>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
@@ -46,8 +48,8 @@ export default function DrainMap() {
               <defs>
                 <linearGradient id="mapGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#2fbf8f" />
-                  <stop offset="45%" stopColor="#2fbf8f" />
-                  <stop offset="60%" stopColor="#f0b429" />
+                  <stop offset="14%" stopColor="#f0b429" />
+                  <stop offset="90%" stopColor="#f0b429" />
                   <stop offset="100%" stopColor="#f05252" />
                 </linearGradient>
               </defs>
@@ -132,7 +134,7 @@ export default function DrainMap() {
           <div className="card p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="label">Drain #{String(selected.id).padStart(2, "0")} · {selected.bank} bank</p>
+                <p className="label">Drain #{String(selected.dpccId).padStart(2, "0")} · {selected.bank} bank</p>
                 <h3 className="mt-1 font-display text-2xl font-bold text-snow">{selected.name}</h3>
               </div>
               {selected.dischargePct !== null && (
@@ -163,6 +165,10 @@ export default function DrainMap() {
             </div>
 
             <p className="mt-5 text-sm leading-relaxed text-mist">{selected.note}</p>
+
+            <div className="mt-5">
+              <LatestSample drainId={selected.id} />
+            </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <span
@@ -196,12 +202,18 @@ export default function DrainMap() {
                 </span>
               ) : (
                 <span className="rounded-full border border-line bg-panel px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber">
-                  DHS: awaiting public data
+                  DHS: {selected.noFlow ? "not rated (no flow)" : "not yet rated"}
                 </span>
               )}
             </div>
           </div>
         </div>
+
+        <p className="mt-5 max-w-3xl text-[11px] leading-relaxed text-fog/70">
+          Roster note: this map follows the Sep 2026 DPCC table of 22 outfalls, including RME/RD-180
+          and Drain No. 12A. Tehkhand and Tuglakabad are not in that table. Latest official sample:{" "}
+          {LATEST_ROUND.sampled}.
+        </p>
       </div>
       </Reveal>
     </section>

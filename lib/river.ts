@@ -29,12 +29,13 @@ function rgbToHex(r: number, g: number, b: number) {
   return `#${c(r)}${c(g)}${c(b)}`;
 }
 
-// Health stops along the stretch, keyed to real DO readings (DPCC May 2026):
-// Palla alive (5.9) -> Wazirabad struggling (3.1) -> ISBT/ITO/Okhla dead (0.0).
+// Health stops along the stretch, keyed to real DO readings (DPCC Sep 2026):
+// Palla alive (6.5) -> Wazirabad not reported -> ISBT/ITO/Okhla stressed (2.9-4.2)
+// -> Asgarpur nil (0.0).
 const HEALTH_STOPS: [number, string][] = [
   [0, "#2fbf8f"],
-  [0.16, "#f0b429"],
-  [0.3, "#f05252"],
+  [0.14, "#f0b429"],
+  [0.88, "#f0b429"],
   [1, "#f05252"],
 ];
 

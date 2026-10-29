@@ -11,6 +11,10 @@
 //   T   Trend          (major improvement 100 → major decline 0)
 //   PL  Pollution load (mass/volume of pollution entering the river)
 //
+// Where DPCC publishes no flow share (the two newly reported drains), PL is
+// excluded and the remaining 0.70/0.20 weights are renormalised. The UI says
+// "not published" rather than pretending the load is zero.
+//
 // DISPLAYED SEPARATELY — never part of the score:
 //   Confidence (%)   — how certain we are the score is correct
 //   Risk level       — Low / Medium / High / Critical
@@ -20,6 +24,7 @@
 // ---------------------------------------------------------------------------
 
 import { DRAINS } from "@/data/drains";
+import { DRAIN_SAMPLES, LATEST_ROUND, PREV_ROUND } from "@/data/water-quality";
 
 export type TrendState = "muchBetter" | "better" | "same" | "worse" | "muchWorse";
 
@@ -89,7 +94,7 @@ export const TREND_LABELS: Record<TrendState, string> = {
 export const TREND_GLYPH: Record<TrendState, { g: string; c: string }> = {
   muchBetter: { g: "▲▲", c: "#2fbf8f" },
   better: { g: "▲", c: "#2fbf8f" },
-  same: { g: "＝", c: "#f0b429" },
+  same: { g: "→", c: "#f0b429" },
   worse: { g: "▼", c: "#f05252" },
   muchWorse: { g: "▼▼", c: "#f05252" },
 };
@@ -154,10 +159,10 @@ function computeWq(wq: Partial<Record<WqKey, WqReading>>): { score: number; deta
   return { score, detail, missing };
 }
 
-function computeLoad(input: DhsInput): number {
-  if (!input.load) return 0;
+function computeLoad(input: DhsInput): number | null {
+  if (!input.load) return null;
   const pct = DRAINS.find((d) => d.id === input.drainId)?.dischargePct;
-  if (pct == null || pct <= 0) return 100; // tapped / no measurable outfall — no load
+  if (pct == null || pct <= 0) return null; // no published share — exclude PL
   return clamp(100 * (1 - pct / MAX_DISCHARGE_PCT));
 }
 
@@ -174,7 +179,7 @@ export type DhsResult = {
   drainId: number;
   wq: number;
   trend: number;
-  pl: number;
+  pl: number | null;
   total: number;
   risk: RiskLevel;
   wqDetail: WqDetail[];
@@ -188,8 +193,9 @@ export function computeDhs(input: DhsInput): DhsResult {
   const { score: wq, detail: wqDetail, missing: wqMissing } = computeWq(input.wq);
   const trend = TREND_SCORES[input.trend.state];
   const pl = computeLoad(input);
+  const activeWeight = pl === null ? DHS_WEIGHTS.wq + DHS_WEIGHTS.trend : 1;
   const total = Math.round(
-    DHS_WEIGHTS.wq * wq + DHS_WEIGHTS.trend * trend + DHS_WEIGHTS.pl * pl
+    (DHS_WEIGHTS.wq * wq + DHS_WEIGHTS.trend * trend + (pl ?? 0) * DHS_WEIGHTS.pl) / activeWeight
   );
   const confidence = computeConfidence(input.confidence);
 
@@ -224,220 +230,193 @@ export function computeDhs(input: DhsInput): DhsResult {
 
 // --- rated drains (public data only) ----------------------------------------
 
-export const DHS_INPUTS: DhsInput[] = [
-  {
-    // Najafgarh — 69.77% of the 22-drain discharge (DPCC 2025)
-    drainId: 1,
-    wq: {
-      do: { value: 3.1, source: "DPCC May 2026 — Wazirabad station (nearest point below outfall)", inferred: true },
-      bod: { value: 70, source: "DPCC Jul 2026 — Report DPCC/W/D/2026/223–244//3039, sampled 06.07.2026 (norm ≤ 30)" },
-      ph: { value: 7.4, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 120, source: "TSS 120 mg/L from same report, as turbidity proxy", inferred: true },
-      waste: { value: 30, source: "Foam episodes documented — NGT orders 2022; media Nov 2025" },
-    },
-    trend: {
-      state: "worse",
-      note: "Outfall BOD 60 → 70 (Oct 2025 → Jul 2026); DO at Wazirabad fell 6.8 → 3.1 (DPCC 2025 → May 2026)",
-    },
-    load: { note: "69.77% of 22-drain discharge ≈ ~862 MGD (DJB May 2026) — more than all 37 STPs combined (814.23 MGD)" },
-    confidence: {
-      officialSources: 4, // DPCC · DJB · HT · NGT
-      volunteerVerified: false, // field checks not confirmed — set true only if verified on the ground
-      liveSensor: false, // no DJB real-time monitor on this drain yet
-      droneImagery: false, // no-drone project by design
-      note: "4 independent public reports. No live sensor on this drain.",
-    },
-    prev: {
-      wq: {
-        do: { value: 6.8, source: "DPCC 2025 — Wazirabad station", inferred: true },
-        bod: { value: 60, source: "DPCC Oct 2025 via HT (stable)" },
-        ph: { value: 7.5, source: "DPCC river pH range", inferred: true },
-        waste: { value: 30, source: "Foam episodes documented" },
-      },
-    },
-  },
-  {
-    // Shahdara — 16.12% of the 22-drain discharge (DPCC 2025)
-    drainId: 2,
-    wq: {
-      do: { value: 0, source: "DPCC May 2026 — Asgarpur exit station (downstream of outfall)", inferred: true },
-      bod: { value: 125, source: "DPCC Jul 2026 — Report DPCC/W/D/2026/223–244//3039, drain outfall, sampled 06.07.2026 (norm ≤ 30)" },
-      ph: { value: 7.5, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 240, source: "TSS 240 mg/L from same report, as turbidity proxy", inferred: true },
-      waste: { value: 30, source: "Foam visible at Okhla confluence — media Nov 2025" },
-    },
-    trend: {
-      state: "same",
-      note: "Outfall BOD 145 (Oct 2025, Sahibabad feeder) → 125 (Jul 2026, drain outfall); UP feeders still 110–120",
-    },
-    load: { note: "16.12% of 22-drain discharge (DPCC 2025); with Najafgarh ≈ 84% of drain pollution (TNIE, Jul 2025)" },
-    confidence: {
-      officialSources: 3, // DPCC · DJB · TNIE
-      volunteerVerified: false, // field checks not confirmed — set true only if verified on the ground
-      liveSensor: false,
-      droneImagery: false,
-      note: "3 independent public reports. No live sensor on this drain.",
-    },
-  },
-];
+const LATEST_SOURCE = `DPCC ${LATEST_ROUND.label} — Report ${LATEST_ROUND.drainReport}, sampled ${LATEST_ROUND.sampled} (norm <= 30)`;
+const PREV_SOURCE = `DPCC ${PREV_ROUND.label} — Report ${PREV_ROUND.drainReport}, sampled ${PREV_ROUND.sampled} (norm <= 30)`;
 
-// --- baseline round: DPCC Jul 2026 (Report No. DPCC/W/D/2026/223–244//3039,
-// sampled 06.07.2026). One official source per drain → confidence 40%.
-// Confidence rises as RTI replies and repeat rounds arrive.
-const JUL26 = "DPCC Jul 2026 — Report DPCC/W/D/2026/223–244//3039, sampled 06.07.2026 (norm ≤ 30)";
-const SINGLE = {
+function sampleWq(drainId: number, round: "latest" | "prev"): Partial<Record<WqKey, WqReading>> {
+  const s = DRAIN_SAMPLES[drainId]?.[round];
+  if (!s || s.noFlow || s.bod == null || s.ph == null || s.tss == null) return {};
+  const roundLabel = round === "latest" ? LATEST_ROUND.label : PREV_ROUND.label;
+  return {
+    bod: { value: s.bod, source: round === "latest" ? LATEST_SOURCE : PREV_SOURCE },
+    ph: { value: s.ph, source: `DPCC ${roundLabel} drain report (same round)` },
+    turbidity: {
+      value: s.tss,
+      source: `TSS ${s.tss} mg/L from same report, as turbidity proxy`,
+      inferred: true,
+    },
+  };
+}
+
+const SINGLE: DhsConfidence = {
   officialSources: 1,
   volunteerVerified: false,
   liveSensor: false,
   droneImagery: false,
-  note: "Single official source (DPCC Jul 2026 round). Confidence rises as more sources arrive.",
+  note: "Single official source (DPCC Sep 2026 round). Confidence rises as more sources arrive.",
 };
 
-const NEW_DRAINS: DhsInput[] = [
-  {
-    // Barapulla — 4.92% discharge; worst BOD of the July round
-    drainId: 3,
-    wq: {
-      bod: { value: 130, source: JUL26 },
-      ph: { value: 7.1, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 216, source: "TSS 216 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "First rated on the Jul 2026 round — baseline." },
-    load: { note: "4.92% of 22-drain discharge (DPCC 2025) — third-largest by flow" },
-    confidence: SINGLE,
-  },
-  {
-    // Power House / Delhi Gate — 4.16% discharge, partially tapped
-    drainId: 4,
-    wq: {
-      bod: { value: 84, source: JUL26 },
-      ph: { value: 7.4, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 172, source: "TSS 172 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "First rated on the Jul 2026 round — baseline." },
-    load: { note: "4.16% of 22-drain discharge (DPCC 2025); partially tapped" },
-    confidence: SINGLE,
-  },
-  {
-    // ISBT (Qudsia Bagh / Mori Gate) — 1.47% discharge
-    drainId: 5,
-    wq: {
-      bod: { value: 105, source: JUL26 },
-      ph: { value: 7.2, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 134, source: "TSS 134 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "First rated on the Jul 2026 round — baseline." },
-    load: { note: "1.47% of 22-drain discharge (DPCC 2025)" },
-    confidence: SINGLE,
-  },
-  {
-    // Sen Nursing Home — 1.47% discharge, partially tapped
-    drainId: 6,
-    wq: {
-      bod: { value: 98, source: JUL26 },
-      ph: { value: 7.2, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 212, source: "TSS 212 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "First rated on the Jul 2026 round — baseline." },
-    load: { note: "1.47% of 22-drain discharge (DPCC 2025); partially tapped" },
-    confidence: SINGLE,
-  },
-  {
-    // Maharani Bagh — 1.03% discharge
-    drainId: 7,
-    wq: {
-      bod: { value: 90, source: JUL26 },
-      ph: { value: 7.2, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 170, source: "TSS 170 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "First rated on the Jul 2026 round — baseline." },
-    load: { note: "1.03% of 22-drain discharge (DPCC 2025)" },
-    confidence: SINGLE,
-  },
-  {
-    // Kailash Nagar — 0.46% discharge, to be tapped
-    drainId: 8,
-    wq: {
-      bod: { value: 80, source: JUL26 },
-      ph: { value: 6.9, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 138, source: "TSS 138 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "First rated on the Jul 2026 round — baseline." },
-    load: { note: "0.46% of 22-drain discharge (DPCC 2025)" },
-    confidence: SINGLE,
-  },
-  {
-    // Abul Fazal — 0.24% discharge; pH digit clipped in scan, inferred 7.0
-    drainId: 9,
-    wq: {
-      bod: { value: 50, source: JUL26 },
-      ph: { value: 7.0, source: "DPCC Jul 2026 drain report — second digit clipped in scan", inferred: true },
-      turbidity: { value: 98, source: "TSS 98 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "First rated on the Jul 2026 round — baseline." },
-    load: { note: "0.24% of 22-drain discharge (DPCC 2025)" },
-    confidence: SINGLE,
-  },
-  {
-    // Sonia Vihar — 0.23% discharge
-    drainId: 10,
-    wq: {
-      bod: { value: 74, source: JUL26 },
-      ph: { value: 7.1, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 108, source: "TSS 108 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "First rated on the Jul 2026 round — baseline." },
-    load: { note: "0.23% of 22-drain discharge (DPCC 2025)" },
-    confidence: SINGLE,
-  },
-  {
-    // Jaitpur — 0.19% discharge, southern-most east-bank outfall
-    drainId: 11,
-    wq: {
-      bod: { value: 75, source: JUL26 },
-      ph: { value: 7.1, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 126, source: "TSS 126 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "First rated on the Jul 2026 round — baseline." },
-    load: { note: "0.19% of 22-drain discharge (DPCC 2025)" },
-    confidence: SINGLE,
-  },
-  {
-    // Shastri Park — only Oct 2025 pass; failed again in Jul 2026 (BOD 95)
-    drainId: 12,
-    wq: {
-      bod: { value: 95, source: JUL26 },
-      ph: { value: 7.1, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 168, source: "TSS 168 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: {
-      state: "worse",
-      note: "Only drain meeting all standards in Oct 2025 (BOD ≤30) — failed Jul 2026 at BOD 95",
-    },
-    load: { note: "0.18% of 22-drain discharge (DPCC 2025)" },
-    confidence: {
-      officialSources: 2, // DPCC Oct 2025 via HT + DPCC Jul 2026
-      volunteerVerified: false,
-      liveSensor: false,
-      droneImagery: false,
-      note: "Two official rounds — Oct 2025 (pass) and Jul 2026 (fail).",
-    },
-  },
-  {
-    // Drain No. 14 — tapped but carried monsoon flow in Jul 2026
-    drainId: 19,
-    wq: {
-      bod: { value: 32, source: JUL26 },
-      ph: { value: 7.3, source: "DPCC Jul 2026 drain report (same round)" },
-      turbidity: { value: 64, source: "TSS 64 mg/L from same report, as turbidity proxy", inferred: true },
-    },
-    trend: { state: "same", note: "Tapped drain — monsoon flow in Jul 2026; closest of any flowing drain to the BOD norm" },
-    load: { note: "Tapped — no standing outfall load; Jul 2026 monsoon overflow only" },
-    confidence: SINGLE,
-  },
-];
+function makeInput({
+  drainId,
+  loadNote,
+  trendNote,
+  confidence = SINGLE,
+  wqExtra,
+  prevExtra,
+  trendState = "same",
+}: {
+  drainId: number;
+  loadNote?: string;
+  trendNote: string;
+  confidence?: DhsConfidence;
+  wqExtra?: Partial<Record<WqKey, WqReading>>;
+  prevExtra?: Partial<Record<WqKey, WqReading>>;
+  trendState?: TrendState;
+}): DhsInput {
+  const latest = sampleWq(drainId, "latest");
+  const prev = sampleWq(drainId, "prev");
+  const input: DhsInput = {
+    drainId,
+    wq: { ...latest, ...wqExtra },
+    trend: { state: trendState, note: trendNote },
+    confidence,
+  };
+  if (loadNote) input.load = { note: loadNote };
+  if (Object.keys(prev).length > 0) {
+    input.prev = { wq: { ...prev, ...prevExtra } };
+  }
+  return input;
+}
 
-DHS_INPUTS.push(...NEW_DRAINS);
+const MAY_DO_WAZIRABAD: WqReading = {
+  value: 3.1,
+  source: "DPCC May 2026 — Wazirabad station; Sep 2026 DO not reported",
+  inferred: true,
+};
+const SEP_DO_ASGARPUR: WqReading = {
+  value: 0,
+  source: "DPCC Sep 2026 — Asgarpur exit station (downstream); nil DO",
+  inferred: true,
+};
+const FOAM_NAJAFGARH: WqReading = {
+  value: 30,
+  source: "Foam episodes documented — NGT orders 2022; media Nov 2025",
+};
+const FOAM_SHAHDARA: WqReading = {
+  value: 30,
+  source: "Foam visible at Okhla confluence — media Nov 2025",
+};
+
+const NAJAFGARH: DhsInput = makeInput({
+  drainId: 1,
+  loadNote:
+    "69.77% of 22-drain discharge ≈ 862 MGD (DJB May 2026) — more than all 37 STPs combined (814.23 MGD)",
+  trendNote: "BOD 66 → 62 mg/L (Aug → Sep); stable at a high level.",
+  confidence: {
+    officialSources: 4, // DPCC • DJB • HT • NGT
+    volunteerVerified: false,
+    liveSensor: false,
+    droneImagery: false,
+    note: "4 independent public reports. No live sensor on this drain.",
+  },
+  wqExtra: { do: MAY_DO_WAZIRABAD, waste: FOAM_NAJAFGARH },
+  prevExtra: { do: MAY_DO_WAZIRABAD, waste: FOAM_NAJAFGARH },
+});
+
+const SHAHDARA: DhsInput = makeInput({
+  drainId: 2,
+  loadNote:
+    "16.12% of 22-drain discharge (DPCC 2025); with Najafgarh ≈ 87% of drain BOD load (DPCC 2025)",
+  trendNote: "BOD 120 → 120 mg/L (Aug → Sep); stable.",
+  confidence: {
+    officialSources: 3, // DPCC • DJB • TNIE
+    volunteerVerified: false,
+    liveSensor: false,
+    droneImagery: false,
+    note: "3 independent public reports. No live sensor on this drain.",
+  },
+  wqExtra: { do: SEP_DO_ASGARPUR, waste: FOAM_SHAHDARA },
+  prevExtra: { do: SEP_DO_ASGARPUR, waste: FOAM_SHAHDARA },
+});
+
+const TWO_ROUNDS: DhsConfidence = {
+  officialSources: 2, // DPCC Oct 2025 via HT + DPCC Sep 2026
+  volunteerVerified: false,
+  liveSensor: false,
+  droneImagery: false,
+  note: "Two official rounds — Oct 2025 (pass) and Sep 2026 (fail).",
+};
+
+export const DHS_INPUTS: DhsInput[] = [
+  NAJAFGARH,
+  SHAHDARA,
+  makeInput({
+    drainId: 3,
+    loadNote: "4.92% of 22-drain discharge (DPCC 2025) — third-largest by flow",
+    trendNote: "BOD 120 → 125 mg/L (Aug → Sep); stable, still the worst of the round.",
+  }),
+  makeInput({
+    drainId: 4,
+    loadNote: "4.16% of 22-drain discharge (DPCC 2025); partially tapped",
+    trendNote: "BOD 86 → 86 mg/L (Aug → Sep); stable.",
+  }),
+  makeInput({
+    drainId: 5,
+    loadNote: "1.47% of 22-drain discharge (DPCC 2025)",
+    trendNote: "BOD 100 → 90 mg/L (Aug → Sep); still three times the norm.",
+  }),
+  makeInput({
+    drainId: 6,
+    loadNote: "1.47% of 22-drain discharge (DPCC 2025); partially tapped",
+    trendNote: "BOD 100 → 106 mg/L (Aug → Sep); stable.",
+  }),
+  makeInput({
+    drainId: 7,
+    loadNote: "1.03% of 22-drain discharge (DPCC 2025)",
+    trendNote: "BOD 86 → 88 mg/L (Aug → Sep); stable.",
+  }),
+  makeInput({
+    drainId: 8,
+    loadNote: "0.46% of 22-drain discharge (DPCC 2025)",
+    trendNote: "BOD 80 → 82 mg/L (Aug → Sep); stable.",
+  }),
+  makeInput({
+    drainId: 9,
+    loadNote: "0.24% of 22-drain discharge (DPCC 2025)",
+    trendNote: "BOD 46 → 48 mg/L (Aug → Sep); stable.",
+  }),
+  makeInput({
+    drainId: 10,
+    loadNote: "0.23% of 22-drain discharge (DPCC 2025)",
+    trendNote: "BOD 70 → 66 mg/L (Aug → Sep); stable.",
+  }),
+  makeInput({
+    drainId: 11,
+    loadNote: "0.19% of 22-drain discharge (DPCC 2025)",
+    trendNote: "BOD 70 → 70 mg/L (Aug → Sep); stable.",
+  }),
+  makeInput({
+    drainId: 12,
+    loadNote: "0.18% of 22-drain discharge (DPCC 2025)",
+    trendNote: "BOD 90 → 85 mg/L (Aug → Sep); still above the norm after its Oct 2025 pass.",
+    confidence: TWO_ROUNDS,
+  }),
+  makeInput({
+    drainId: 19,
+    loadNote: "Tapped — no standing outfall load; Sep 2026 monsoon flow only",
+    trendNote: "BOD 34 → 34 mg/L (Aug → Sep); closest flowing drain to the 30 norm.",
+  }),
+  makeInput({
+    drainId: 20,
+    loadNote: "No published 2025 flow share for this newly identified drain; pollution load excluded",
+    trendNote: "BOD 80 → 75 mg/L (Aug → Sep); still above the norm.",
+  }),
+  makeInput({
+    drainId: 22,
+    loadNote: "No published 2025 flow share for this newly reported drain; pollution load excluded",
+    trendNote: "First rated on the Sep 2026 round — no flow sample in Aug 2026.",
+  }),
+];
 
 const RESULTS: Record<number, DhsResult> = Object.fromEntries(
   DHS_INPUTS.map((i) => [i.drainId, computeDhs(i)])

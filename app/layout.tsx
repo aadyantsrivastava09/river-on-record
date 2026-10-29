@@ -20,7 +20,7 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "River on Record — The Public Drain Scoreboard for the Yamuna",
   description:
-    "Every drain that kills the Yamuna, rated and published weekly. Built entirely on public government data — 22 drains, scored from DPCC, CPCB, DJB and NGT records. No hardware. No excuses.",
+    "Every drain that feeds the Yamuna, rated from the latest official DPCC round. Built entirely on public government data — 22 drains, scored from DPCC, CPCB, DJB and NMCG records. No hardware. No excuses.",
   keywords: ["Yamuna", "River on Record", "pollution", "drains", "Delhi", "citizen data"],
   icons: { icon: "/logo-round.png" },
 };

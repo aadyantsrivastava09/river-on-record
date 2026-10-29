@@ -12,6 +12,8 @@ import {
 } from "@/data/dhs";
 import type { DhsResult, RiskLevel, TrendState } from "@/data/dhs";
 import Reveal from "@/components/Reveal";
+import LatestSample from "@/components/LatestSample";
+import { LATEST_ROUND, PREV_ROUND } from "@/data/water-quality";
 
 type SortKey = "score" | "rank" | "load" | "name";
 
@@ -67,12 +69,12 @@ export default function Scoreboard() {
           if (ra && rb) return ra.total - rb.total; // most dangerous first
           if (ra) return -1;
           if (rb) return 1;
-          return a.id - b.id;
+          return a.dpccId - b.dpccId;
         });
         break;
       }
       default:
-        r.sort((a, b) => a.id - b.id);
+        r.sort((a, b) => a.dpccId - b.dpccId);
     }
     return r;
   }, [query, sort]);
@@ -98,7 +100,7 @@ export default function Scoreboard() {
             The 22-drain scoreboard
           </h2>
           <p className="max-w-md text-sm leading-relaxed text-fog">
-            Every drain that feeds the 22-km stretch, scored and republished weekly.
+            Every drain that feeds the 22-km stretch, scored from the latest official DPCC round.
             One question, one number:{" "}
             <span className="text-snow">how healthy is this drain in the latest DPCC round?</span>
           </p>
@@ -138,7 +140,7 @@ export default function Scoreboard() {
               {
                 k: "Water Quality",
                 w: "70% of the score",
-                desc: "What's actually in the water — oxygen, sewage, ammonia, pH, turbidity — checked against legal standards.",
+                desc: "What is actually in the water — BOD, pH, TSS, plus oxygen and ammonia where the river data exists — checked against legal standards.",
                 c: "#2fbf8f",
               },
               {
@@ -204,7 +206,7 @@ export default function Scoreboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">
-              {DHS_INPUTS.length} of {DRAINS.length} drains rated · data as of Jul 2026
+              {DHS_INPUTS.length} of {DRAINS.length} drains rated · data as of {LATEST_ROUND.sampled}
             </span>
             <input
               value={query}
@@ -253,7 +255,24 @@ export default function Scoreboard() {
         </div>
 
         <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-fog/70">
-          Sources: DPCC monthly drain reports · DJB · CPCB · NGT orders · HT/ANI/The Hindu citing official data · as of Jul 2026
+          Sources: DPCC monthly drain reports · DJB · CPCB · NMCG · HT/ANI/The Hindu · latest round {LATEST_ROUND.label} ({LATEST_ROUND.sampled}).
+        </p>
+        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-alive">
+          <a href={LATEST_ROUND.drainUrl} target="_blank" rel="noopener noreferrer" className="hover:text-snow">
+            Drain report
+          </a>
+          {" | "}
+          <a href={LATEST_ROUND.riverUrl} target="_blank" rel="noopener noreferrer" className="hover:text-snow">
+            River report
+          </a>
+          {" | "}
+          <a href={LATEST_ROUND.indexUrl} target="_blank" rel="noopener noreferrer" className="hover:text-snow">
+            DPCC index
+          </a>
+        </p>
+        <p className="mt-2 max-w-3xl text-[11px] leading-relaxed text-fog/70">
+          Roster note: the Sep 2026 DPCC table lists 22 outfalls, including RME/RD-180 and Drain No. 12A.
+          Tehkhand and Tuglakabad are not in this table. Trend compares {PREV_ROUND.label} with {LATEST_ROUND.label}.
         </p>
       </div>
       </Reveal>
@@ -285,7 +304,7 @@ function FragmentRow({
         }`}
         onClick={onToggle}
       >
-        <td className="px-4 py-3.5 font-mono text-xs text-fog">{String(d.id).padStart(2, "0")}</td>
+        <td className="px-4 py-3.5 font-mono text-xs text-fog">{String(d.dpccId).padStart(2, "0")}</td>
         <td className="px-4 py-3.5">
           <p className="font-display text-sm font-semibold text-snow">{d.name}</p>
           <p className="mt-0.5 max-w-[240px] text-[11px] leading-snug text-fog">{d.note}</p>
@@ -363,7 +382,10 @@ function FragmentRow({
       {open && dhs && (
         <tr className="border-b border-line/60 bg-panel/70">
           <td colSpan={8} className="px-6 py-6">
-            <Breakdown dhs={dhs} drainName={d.name} />
+            <div className="space-y-4">
+              <LatestSample drainId={d.id} />
+              <Breakdown dhs={dhs} drainName={d.name} />
+            </div>
           </td>
         </tr>
       )}
@@ -373,10 +395,10 @@ function FragmentRow({
 
 function Breakdown({ dhs, drainName }: { dhs: DhsResult; drainName: string }) {
   const input = DHS_INPUTS.find((i) => i.drainId === dhs.drainId)!;
-  const values: Record<string, number> = {
+  const values: Record<string, number | null> = {
     wq: Math.round(dhs.wq),
     trend: dhs.trend,
-    pl: Math.round(dhs.pl),
+    pl: dhs.pl === null ? null : Math.round(dhs.pl),
   };
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -394,15 +416,15 @@ function Breakdown({ dhs, drainName }: { dhs: DhsResult; drainName: string }) {
                   <span className="uppercase tracking-[0.14em] text-mist">{c.label}</span>
                   <span className="text-fog">
                     <span className="mr-2 text-fog/70">{c.weight}</span>
-                    <span className="font-bold" style={{ color: barColor(v) }}>
-                      {Math.round(v)}
+                    <span className="font-bold" style={{ color: v === null ? "#7e97a6" : barColor(v) }}>
+                      {v === null ? "not published" : Math.round(v)}
                     </span>
                   </span>
                 </div>
                 <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-panel2">
                   <div
                     className="h-full rounded-full transition-all"
-                    style={{ width: `${v}%`, background: barColor(v) }}
+                    style={{ width: `${v ?? 0}%`, background: v === null ? "#40505c" : barColor(v) }}
                   />
                 </div>
               </div>

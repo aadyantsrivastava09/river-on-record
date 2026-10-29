@@ -4,24 +4,35 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { DO_FC, TICKER_ITEMS } from "@/data/drains";
+import { LATEST_ROUND } from "@/data/water-quality";
 import CountUp from "@/components/CountUp";
 import { RIVER_PATH } from "@/lib/river";
 
 // Numeric targets for the animated counters — values match the FACTS strings above,
 // so the count-up lands exactly on the published figure.
 const COUNT_FACTS = [
-  { label: "of river carrying >80% of the pollution — alive at Palla, dead at Okhla", to: 22, decimals: 0, unit: "km" },
+  { label: "of river carrying >80% of the pollution — alive at Palla, nil DO at Asgarpur", to: 22, decimals: 0, unit: "km" },
   { label: "of drain flow pouring in every day (DJB, May 2026)", to: 1324.4, decimals: 1, unit: "MGD" },
-  { label: "of 27 drains failed water-quality standards — only one passed (Oct 2025 round)", to: 26, decimals: 0, unit: "/27" },
+  { label: "flowing drains failed the BOD 30 mg/L norm — every single one in Sep 2026", to: 15, decimals: 0, unit: "/15" },
   { label: "from one drain — Najafgarh, more than all 37 STPs combined (DJB, May 2026)", to: 862, decimals: 0, unit: "MGD", prefix: "~" },
   { label: "of the pollution load from just two drains — Najafgarh + Shahdara", to: 87, decimals: 0, unit: "%" },
 ];
 
 const MARKER_FRACS = [0.05, 0.17, 0.36, 0.5, 0.64, 0.8, 0.95];
 
-type Marker = { x: number; y: number; site: string; do2026: number; fc: number };
+const BUBBLES: [number, string, number][] = [
+  [0.02, "#2fbf8f", -12],
+  [0.06, "#56c8e8", 12],
+  [0.1, "#56c8e8", -12],
+  [0.13, "#2fbf8f", 12],
+  [0.05, "#56c8e8", -10],
+];
 
-function doColor(doVal: number) {
+type Marker = { x: number; y: number; site: string; do2026: number | null; fc: number };
+type Bubble = { x: number; y: number; fill: string };
+
+function doColor(doVal: number | null) {
+  if (doVal === null) return "#7e97a6";
   if (doVal >= 5) return "#2fbf8f";
   if (doVal > 0) return "#f0b429";
   return "#f05252";
@@ -31,18 +42,23 @@ function RiverSVG() {
   const pathRef = useRef<SVGPathElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [markers, setMarkers] = useState<Marker[]>([]);
-  const [len, setLen] = useState(0);
+  const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
 
   useEffect(() => {
     if (!pathRef.current) return;
     const total = pathRef.current.getTotalLength();
-    setLen(total);
     const pts = DO_FC.map((p, i) => {
       const pt = pathRef.current!.getPointAtLength(MARKER_FRACS[i] * total);
       return { x: pt.x, y: pt.y, site: p.site, do2026: p.do2026, fc: p.fc };
     });
     setMarkers(pts);
+    setBubbles(
+      BUBBLES.map(([f, fill, dx]) => {
+        const pt = pathRef.current!.getPointAtLength(f * total);
+        return { x: pt.x + dx, y: pt.y - 6, fill };
+      })
+    );
   }, []);
 
   const { scrollYProgress } = useScroll({
@@ -72,9 +88,9 @@ function RiverSVG() {
           <defs>
             <linearGradient id="riverGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#2fbf8f" />
-              <stop offset="42%" stopColor="#2fbf8f" />
-              <stop offset="55%" stopColor="#f0b429" />
-              <stop offset="70%" stopColor="#f05252" />
+              <stop offset="12%" stopColor="#2fbf8f" />
+              <stop offset="24%" stopColor="#f0b429" />
+              <stop offset="88%" stopColor="#f0b429" />
               <stop offset="100%" stopColor="#f05252" />
             </linearGradient>
           </defs>
@@ -129,28 +145,17 @@ function RiverSVG() {
           ))}
 
           {/* oxygen bubbles upstream, where the river is still alive */}
-          {len > 0 &&
-            [
-              [0.02, "#2fbf8f", -12],
-              [0.06, "#56c8e8", 12],
-              [0.1, "#56c8e8", -12],
-              [0.13, "#2fbf8f", 12],
-              [0.05, "#56c8e8", -10],
-            ].map(([f, c, dx], i) => {
-              const pt = pathRef.current?.getPointAtLength((f as number) * len);
-              if (!pt) return null;
-              return (
-                <circle
-                  key={i}
-                  cx={pt.x + (dx as number)}
-                  cy={pt.y - 6}
-                  r={i % 2 === 0 ? 2.2 : 3}
-                  fill={c as string}
-                  className="animate-bob"
-                  style={{ animationDelay: `${i * 0.6}s` }}
-                />
-              );
-            })}
+          {bubbles.map((b, i) => (
+            <circle
+              key={i}
+              cx={b.x}
+              cy={b.y}
+              r={i % 2 === 0 ? 2.2 : 3}
+              fill={b.fill}
+              className="animate-bob"
+              style={{ animationDelay: `${i * 0.6}s` }}
+            />
+          ))}
 
           {/* DO station markers */}
           {markers.map((m, i) => (
@@ -164,7 +169,7 @@ function RiverSVG() {
                 strokeWidth="1"
                 strokeDasharray="3 3"
               />
-              {m.do2026 <= 0 && (
+              {m.do2026 !== null && m.do2026 <= 0 && (
                 <circle cx={m.x} cy={m.y} r="6.5" fill="none" stroke="#f05252" strokeWidth="1.5" className="marker-ring" />
               )}
               <circle
@@ -178,10 +183,10 @@ function RiverSVG() {
               <text
                 x={m.x > 180 ? 264 : 36}
                 y={m.y - 6}
-                fill={i === 0 ? "#2fbf8f" : m.do2026 > 0 ? "#f0b429" : "#f05252"}
+                 fill={i === 0 ? "#2fbf8f" : doColor(m.do2026)}
                 fontSize="10.5"
                 fontFamily="JetBrains Mono, monospace"
-                textAnchor={m.x > 180 ? "end" : "start"}
+                 textAnchor={m.x > 180 ? "end" : "start"}
               >
                 {m.site.split(" ")[0]}
               </text>
@@ -191,9 +196,9 @@ function RiverSVG() {
                 fill="#7e97a6"
                 fontSize="9"
                 fontFamily="JetBrains Mono, monospace"
-                textAnchor={m.x > 180 ? "end" : "start"}
+                 textAnchor={m.x > 180 ? "end" : "start"}
               >
-                DO {m.do2026}
+                DO {m.do2026 === null ? "n/r" : m.do2026}
               </text>
             </g>
           ))}
@@ -207,7 +212,7 @@ function RiverSVG() {
           </text>
         </svg>
 
-        {len > 0 && (
+        {markers.length > 0 && (
           <div className="pointer-events-none absolute -right-1 top-1/2 -translate-y-1/2 font-mono text-[10px] uppercase tracking-[0.25em] text-fog [writing-mode:vertical-rl]">
             pollution flows ↓
           </div>
@@ -264,7 +269,7 @@ export default function Hero() {
             </a>
 
             <p className="label mb-5 animate-rise">
-              Built entirely on public government data
+Built entirely on public government data · latest DPCC round: {LATEST_ROUND.label}
             </p>
 
             <h1 className="font-display text-4xl font-bold leading-[1.06] tracking-tight text-snow sm:text-5xl lg:text-[3.4rem] animate-rise">
@@ -280,10 +285,10 @@ export default function Hero() {
               And still, no citizen, journalist or court can get a straight answer to one
               question:{" "}
               <span className="text-snow font-semibold">
-                which drain is poisoning the Yamuna this week?
+                which drain is poisoning the Yamuna in the latest official round?
               </span>{" "}
               River on Record answers it — with the data the government already collects,
-              repackaged into a public weekly scoreboard nobody can ignore.
+              repackaged into a public scoreboard nobody can ignore.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4 animate-rise">
@@ -297,7 +302,7 @@ export default function Hero() {
                 href="#data"
                 className="rounded-full border border-line-strong px-6 py-3 font-mono text-sm tracking-wide text-mist transition-colors hover:border-alive/50 hover:text-snow"
               >
-                How it's built
+                How it&apos;s built
               </a>
             </div>
 
@@ -360,7 +365,7 @@ export default function Hero() {
               rel="noopener noreferrer"
               className="font-display text-sm font-bold tracking-wide text-snow transition-colors hover:text-alive"
             >
-              What is Vantalyne Labs? <span className="text-alive">↗</span>
+              What is Vantalyne Labs <span className="text-alive">↗</span>
             </a>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-mist">
               Vantalyne Labs is a youth-led ecosystem of builders. It never takes equity from

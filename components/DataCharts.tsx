@@ -38,13 +38,14 @@ const doOption: EChartsOption = {
   tooltip: TOOLTIP,
   grid: { left: 44, right: 16, top: 30, bottom: 40 },
   xAxis: { ...catAxis(22), data: SITES },
-  yAxis: { ...valAxis("DO (mg/l)"), min: 0, max: 6 },
+  yAxis: { ...valAxis("DO (mg/l)"), min: 0, max: 7 },
   series: [
     {
       name: "Dissolved oxygen",
       type: "line",
       data: DO_FC.map((p) => p.do2026),
       smooth: true,
+      connectNulls: false,
       symbol: "circle",
       symbolSize: 7,
       lineStyle: { color: "#2fbf8f", width: 3 },
@@ -141,7 +142,7 @@ export default function DataCharts() {
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-fog">
           Every chart below is drawn from published government data — DPCC monthly reports
-          (May 2026), Delhi DoE annual averages (2017–2024), DJB and CPCB. We
+          (Sep 2026), Delhi DoE annual averages (2017–2024), DJB and CPCB. We
           added nothing; we simply refused to let it stay unread.
         </p>
 
@@ -149,24 +150,26 @@ export default function DataCharts() {
           <div className="card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-bold text-snow">The 22-km death certificate</h3>
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">DO · May 2026 · DPCC</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">DO · Sep 2026 · DPCC</span>
             </div>
             <Chart option={doOption} className="h-72 w-full" />
             <p className="mt-3 text-xs leading-relaxed text-fog">
-              Dissolved oxygen enters at 5.9 mg/l (healthy ≥ 5) — and hits zero before the
-              first bridge inside the city. Everything downstream is already dead.
+              Dissolved oxygen enters at 6.5 mg/l at Palla. Wazirabad did not report a DO
+              reading this round; through the city it stays between 2.9 and 4.2 mg/l, then
+              falls to nil at Asgarpur. The river is oxygen-stressed, and dead at the exit.
             </p>
           </div>
 
           <div className="card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-bold text-snow">Raw sewage, measured</h3>
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">FC · May 2026 · DPCC · log scale</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-fog">FC · Sep 2026 · DPCC · log scale</span>
             </div>
             <Chart option={fcOption} className="h-72 w-full" />
             <p className="mt-3 text-xs leading-relaxed text-fog">
-              Faecal coliform at Asgarpur: 330,000 MPN/100 ml — 132 times the legal maximum
-              of 2,500. This is the fingerprint of untreated sewage.
+              Faecal coliform at Asgarpur: 38,000 MPN/100 ml — about 15 times the legal
+              maximum of 2,500. May 2026 recorded 330,000 in a different seasonal round; that
+              is history, not the current reading.
             </p>
           </div>
 
@@ -178,7 +181,7 @@ export default function DataCharts() {
             <Chart option={bodOption} className="h-72 w-full" />
             <p className="mt-3 text-xs leading-relaxed text-fog">
               BOD downstream barely moved between 2017 and 2024 — the standard is ≤ 3 mg/l.
-              The river at Asgarpur runs at ~29.
+              The 2024 average at Asgarpur is ~29; the Sep 2026 drain sample is 18.
             </p>
           </div>
 
